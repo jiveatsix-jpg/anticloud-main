@@ -4,51 +4,70 @@ import { Board } from '../types';
 const MAX_HISTORY = 10;
 
 export const useHistory = () => {
-  const historyRef = useRef<Board[][]>([]);
+  const [history, setHistory] = useState<Board[][]>([]);
   const indexRef = useRef(0);
   const [, forceUpdate] = useState(0);
+
+  const index = indexRef.current;
 
   const pushHistory = useCallback((currentBoards: Board[]) => {
     const cloned = JSON.parse(JSON.stringify(currentBoards));
     
-    // Slice to current index to remove redo history, then push new state
-    historyRef.current = historyRef.current.slice(0, indexRef.current);
-    historyRef.current.push(cloned);
+    setHistory(prev => {
+      const newHistory = prev.slice(0, indexRef.current);
+      newHistory.push(cloned);
+      
+      if (newHistory.length > MAX_HISTORY) {
+        return newHistory.slice(1);
+      }
+      return newHistory;
+    });
     
-    // Limit to MAX_HISTORY
-    if (historyRef.current.length > MAX_HISTORY) {
-      historyRef.current.shift();
-    }
-    
-    indexRef.current = historyRef.current.length - 1;
+    indexRef.current += 1;
     forceUpdate(n => n + 1);
   }, []);
 
-  const undo = useCallback((): Board[] | null => {
+  const undo = useCallback(() => {
     if (indexRef.current > 0) {
       indexRef.current -= 1;
       forceUpdate(n => n + 1);
-      return historyRef.current[indexRef.current];
+      return history[indexRef.current];
     }
     return null;
-  }, []);
+  }, [history]);
 
-  const redo = useCallback((): Board[] | null => {
-    if (indexRef.current < historyRef.current.length - 1) {
+  const getUndoState = useCallback(() => {
+    if (indexRef.current > 0) {
+      return history[indexRef.current - 1];
+    }
+    return null;
+  }, [history, index]);
+
+  const redo = useCallback(() => {
+    if (indexRef.current < history.length - 1) {
       indexRef.current += 1;
       forceUpdate(n => n + 1);
-      return historyRef.current[indexRef.current];
+      return history[indexRef.current];
     }
     return null;
-  }, []);
+  }, [history, index]);
+
+  const getRedoState = useCallback(() => {
+    if (indexRef.current < history.length - 1) {
+      return history[indexRef.current + 1];
+    }
+    return null;
+  }, [history, index]);
 
   const canUndo = indexRef.current > 0;
-  const canRedo = indexRef.current < historyRef.current.length - 1;
+  const canRedo = indexRef.current < history.length - 1;
 
   return {
     pushHistory,
     undo,
     redo,
+    getUndoState,
+    getRedoState,
     canUndo,
     canRedo
   };
