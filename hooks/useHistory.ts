@@ -4,13 +4,13 @@ import { Board } from '../types';
 export const useHistory = () => {
   const historyRef = useRef<Board[][]>([]);
   const indexRef = useRef(0);
+  const isOperatingRef = useRef(false);
   const [, forceUpdate] = useState(0);
 
   const pushHistory = useCallback((currentBoards: Board[]) => {
     const cloned = JSON.parse(JSON.stringify(currentBoards));
     console.log('[HISTORY] pushHistory', { clonedLength: cloned.length, itemCount: cloned[0]?.items.length });
     
-    // Remove any future states if we're not at the end (new timeline)
     historyRef.current = historyRef.current.slice(0, indexRef.current);
     historyRef.current.push(cloned);
     
@@ -20,31 +20,41 @@ export const useHistory = () => {
   }, []);
 
   const undo = useCallback((): Board[] | null => {
+    if (isOperatingRef.current) return null;
+    isOperatingRef.current = true;
+    
     console.log('[HISTORY] undo', { index: indexRef.current, length: historyRef.current.length });
-    if (indexRef.current > 1) {
+    if (indexRef.current > 0) {
       indexRef.current -= 1;
-      const result = historyRef.current[indexRef.current - 1];
+      const result = historyRef.current[indexRef.current];
       console.log('[HISTORY] undo result', { index: indexRef.current, itemCount: result?.[0]?.items.length });
       forceUpdate(n => n + 1);
+      setTimeout(() => { isOperatingRef.current = false; }, 50);
       return result;
     }
+    isOperatingRef.current = false;
     return null;
   }, []);
 
   const redo = useCallback((): Board[] | null => {
+    if (isOperatingRef.current) return null;
+    isOperatingRef.current = true;
+    
     console.log('[HISTORY] redo', { index: indexRef.current, length: historyRef.current.length });
-    if (indexRef.current < historyRef.current.length) {
-      const result = historyRef.current[indexRef.current];
+    if (indexRef.current < historyRef.current.length - 1) {
+      const result = historyRef.current[indexRef.current + 1];
       indexRef.current += 1;
       console.log('[HISTORY] redo result', { index: indexRef.current, itemCount: result?.[0]?.items.length });
       forceUpdate(n => n + 1);
+      setTimeout(() => { isOperatingRef.current = false; }, 50);
       return result;
     }
+    isOperatingRef.current = false;
     return null;
   }, []);
 
-  const canUndo = () => indexRef.current > 1;
-  const canRedo = () => indexRef.current < historyRef.current.length;
+  const canUndo = () => indexRef.current > 0;
+  const canRedo = () => indexRef.current < historyRef.current.length - 1;
 
   return {
     pushHistory,
