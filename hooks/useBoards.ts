@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Board, BoardItem } from '../types';
 import { createNewBoard } from '../utils/boardUtils';
 import { GRID_SIZE } from '../constants';
@@ -10,7 +10,10 @@ export const useBoards = () => {
   const [boards, setBoards] = useState<Board[]>([createNewBoard()]);
   const [activeBoardIndex, setActiveBoardIndex] = useState(0);
 
-  const { pushHistory, undo, redo, canUndo, canRedo } = useHistory();
+  const { pushHistory, undo, redo, canUndo, canRedo, getIndex, getHistoryLength } = useHistory();
+  
+  const boardsRef = useRef(boards);
+  boardsRef.current = boards;
 
   useEffect(() => {
     const loadData = async () => {
@@ -250,6 +253,9 @@ export const useBoards = () => {
     canRedo,
     undo,
     redo,
-    pushHistory
+    pushHistory,
+    boardsRef,
+    getIndex,
+    getHistoryLength
   };
 };

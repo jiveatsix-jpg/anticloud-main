@@ -1,74 +1,58 @@
 import { useState, useCallback, useRef } from 'react';
 import { Board } from '../types';
 
-const MAX_HISTORY = 10;
-
 export const useHistory = () => {
-  const [history, setHistory] = useState<Board[][]>([]);
+  const historyRef = useRef<Board[][]>([]);
   const indexRef = useRef(0);
   const [, forceUpdate] = useState(0);
 
-  const index = indexRef.current;
-
   const pushHistory = useCallback((currentBoards: Board[]) => {
     const cloned = JSON.parse(JSON.stringify(currentBoards));
+    console.log('[HISTORY] pushHistory', { clonedLength: cloned.length, itemCount: cloned[0]?.items.length });
     
-    setHistory(prev => {
-      const newHistory = prev.slice(0, indexRef.current);
-      newHistory.push(cloned);
-      
-      if (newHistory.length > MAX_HISTORY) {
-        return newHistory.slice(1);
-      }
-      return newHistory;
-    });
+    // Remove any future states if we're not at the end (new timeline)
+    historyRef.current = historyRef.current.slice(0, indexRef.current);
+    historyRef.current.push(cloned);
     
-    indexRef.current += 1;
+    indexRef.current = historyRef.current.length;
+    console.log('[HISTORY] after push', { index: indexRef.current, length: historyRef.current.length });
     forceUpdate(n => n + 1);
   }, []);
 
-  const undo = useCallback(() => {
-    if (indexRef.current > 0) {
+  const undo = useCallback((): Board[] | null => {
+    console.log('[HISTORY] undo', { index: indexRef.current, length: historyRef.current.length });
+    if (indexRef.current > 1) {
       indexRef.current -= 1;
+      const result = historyRef.current[indexRef.current - 1];
+      console.log('[HISTORY] undo result', { index: indexRef.current, itemCount: result?.[0]?.items.length });
       forceUpdate(n => n + 1);
-      return history[indexRef.current];
+      return result;
     }
     return null;
-  }, [history]);
+  }, []);
 
-  const getUndoState = useCallback(() => {
-    if (indexRef.current > 0) {
-      return history[indexRef.current - 1];
-    }
-    return null;
-  }, [history, index]);
-
-  const redo = useCallback(() => {
-    if (indexRef.current < history.length - 1) {
+  const redo = useCallback((): Board[] | null => {
+    console.log('[HISTORY] redo', { index: indexRef.current, length: historyRef.current.length });
+    if (indexRef.current < historyRef.current.length) {
+      const result = historyRef.current[indexRef.current];
       indexRef.current += 1;
+      console.log('[HISTORY] redo result', { index: indexRef.current, itemCount: result?.[0]?.items.length });
       forceUpdate(n => n + 1);
-      return history[indexRef.current];
+      return result;
     }
     return null;
-  }, [history, index]);
+  }, []);
 
-  const getRedoState = useCallback(() => {
-    if (indexRef.current < history.length - 1) {
-      return history[indexRef.current + 1];
-    }
-    return null;
-  }, [history, index]);
-
-  const canUndo = indexRef.current > 0;
-  const canRedo = indexRef.current < history.length - 1;
+  const canUndo = () => indexRef.current > 1;
+  const canRedo = () => indexRef.current < historyRef.current.length;
 
   return {
     pushHistory,
     undo,
     redo,
-    getUndoState,
-    getRedoState,
     canUndo,
-    canRedo
+    canRedo,
+    getIndex: () => indexRef.current,
+    getHistoryLength: () => historyRef.current.length
   };
 };
