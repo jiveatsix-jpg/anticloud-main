@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { ItemType, BoardItem, Board, TitleCollectionKey, TextboxCollectionKey } from '../types';
 import { FONT_FACES, GRID_SIZE, DEFAULT_TEXTBOX_IMAGE_URLS, DEFAULT_BOX_IMAGE_URL, DEFAULT_BOX_BORDER_SLICE } from '../constants';
 import { createNewBoard } from '../utils/boardUtils';
@@ -26,6 +26,7 @@ interface UseBoardActionsProps {
   setSpriteImages: React.Dispatch<React.SetStateAction<any>>;
   canvasOffsetX: number;
   canvasOffsetY: number;
+  pushHistory?: (boards: Board[]) => void;
 }
 
 export const useBoardActions = ({
@@ -49,12 +50,14 @@ export const useBoardActions = ({
   setPixelImages,
   setSpriteImages,
   canvasOffsetX,
-  canvasOffsetY
+  canvasOffsetY,
+  pushHistory
 }: UseBoardActionsProps) => {
 
   const handleAddItem = useCallback((type: ItemType, imageUrl?: string, extraProps: Partial<BoardItem> = {}) => {
     console.log('handleAddItem called:', { type, imageUrl, extraProps });
     setActiveModal(null);
+    if (pushHistory) pushHistory(boards);
     
     const createItem = (itemWidth: number, itemHeight: number) => {
       const viewport = viewportRef.current;
@@ -144,6 +147,7 @@ export const useBoardActions = ({
 
   const handleBatchAddItems = useCallback((items: { type: ItemType, imageUrl: string, extraProps: Partial<BoardItem> }[]) => {
     setActiveModal(null);
+    if (pushHistory) pushHistory(boards);
     const viewport = viewportRef.current;
     if (!viewport) return;
 
@@ -202,6 +206,7 @@ export const useBoardActions = ({
 
   const handleDuplicateSelected = useCallback(() => {
     if (selectedItemIds.length === 0) return;
+    if (pushHistory) pushHistory(boards);
     const currentBoard = boards[activeBoardIndex];
     const currentItems = currentBoard?.items || [];
     
@@ -226,6 +231,7 @@ export const useBoardActions = ({
 
   const handleDeleteSelected = useCallback(() => {
     if (selectedItemIds.length === 0) return;
+    if (pushHistory) pushHistory(boards);
     setBoards(prev => prev.map((board, index) => 
       index === activeBoardIndex ? { ...board, items: board.items.filter(item => !selectedItemIds.includes(item.id)) } : board
     ));
@@ -244,6 +250,7 @@ export const useBoardActions = ({
 
   const handlePaste = useCallback(() => {
     if (clipboard.length === 0) return;
+    if (pushHistory) pushHistory(boards);
     const currentBoard = boards[activeBoardIndex];
     const currentItems = currentBoard?.items || [];
     
@@ -271,6 +278,7 @@ export const useBoardActions = ({
       const reader = new FileReader();
       reader.onload = (event) => {
         const url = event.target?.result as string;
+        if (pushHistory) pushHistory(boards);
         setBoards(prev => prev.map((board, index) => 
           index === activeBoardIndex ? { ...board, backgroundUrl: url } : board
         ));

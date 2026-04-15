@@ -3,11 +3,14 @@ import { Board, BoardItem } from '../types';
 import { createNewBoard } from '../utils/boardUtils';
 import { GRID_SIZE } from '../constants';
 import { storage } from '../utils/storageUtils';
+import { useHistory } from './useHistory';
 
 export const useBoards = () => {
   const [isBoardsLoaded, setIsBoardsLoaded] = useState(false);
   const [boards, setBoards] = useState<Board[]>([createNewBoard()]);
   const [activeBoardIndex, setActiveBoardIndex] = useState(0);
+
+  const { pushHistory, undo, redo, canUndo, canRedo } = useHistory();
 
   useEffect(() => {
     const loadData = async () => {
@@ -50,37 +53,31 @@ export const useBoards = () => {
   }, [boards.length, activeBoardIndex]);
 
   const handleUpdateItem = useCallback((updatedItem: BoardItem, selectedItemIds: string[]) => {
+    pushHistory(boards);
     setBoards(prev => prev.map((board, index) => {
       if (index !== activeBoardIndex) return board;
-
       const oldItem = board.items.find(i => i.id === updatedItem.id);
       if (!oldItem) return board;
-
       const dx = updatedItem.x - oldItem.x;
       const dy = updatedItem.y - oldItem.y;
-
       if (selectedItemIds.includes(updatedItem.id) && selectedItemIds.length > 1 && (dx !== 0 || dy !== 0)) {
         return {
           ...board,
           items: board.items.map(item => {
             if (selectedItemIds.includes(item.id)) {
               if (item.id === updatedItem.id) return updatedItem;
-              return {
-                ...item,
-                x: item.x + dx,
-                y: item.y + dy
-              };
+              return { ...item, x: item.x + dx, y: item.y + dy };
             }
             return item;
           })
         };
       }
-
       return { ...board, items: board.items.map(item => item.id === updatedItem.id ? updatedItem : item) };
     }));
-  }, [activeBoardIndex]);
+  }, [activeBoardIndex, boards, pushHistory]);
 
   const handleDeleteItem = useCallback((id: string, setSelectedItemIds: React.Dispatch<React.SetStateAction<string[]>>, setSelectedItemId: React.Dispatch<React.SetStateAction<string | null>>) => {
+    pushHistory(boards);
     setBoards(prev => prev.map((board, index) =>
       index === activeBoardIndex
         ? { ...board, items: board.items.filter(item => item.id !== id) }
@@ -88,34 +85,30 @@ export const useBoards = () => {
     ));
     setSelectedItemIds(prev => prev.filter(itemId => itemId !== id));
     setSelectedItemId(prev => prev === id ? null : prev);
-  }, [activeBoardIndex]);
+  }, [activeBoardIndex, boards, pushHistory]);
 
   const handleDuplicateItem = useCallback((id: string) => {
+    pushHistory(boards);
     setBoards(prev => {
       const boardsCopy = [...prev];
       const boardToUpdate = boardsCopy[activeBoardIndex];
       if (!boardToUpdate) return prev;
-
       const itemToDuplicate = boardToUpdate.items.find(item => item.id === id);
       if (!itemToDuplicate) return prev;
-
       const newItem: BoardItem = {
         ...itemToDuplicate,
         id: `item_${Date.now()}_${Math.random()}`,
         x: itemToDuplicate.x + GRID_SIZE,
         y: itemToDuplicate.y + GRID_SIZE,
       };
-
-      newItem.x = newItem.x;
-      newItem.y = newItem.y;
-
       const newItems = [...boardToUpdate.items, newItem];
       boardsCopy[activeBoardIndex] = { ...boardToUpdate, items: newItems };
       return boardsCopy;
     });
-  }, [activeBoardIndex]);
+  }, [activeBoardIndex, boards, pushHistory]);
 
   const handleSendItemToBack = useCallback((id: string) => {
+    pushHistory(boards);
     setBoards(prev => prev.map((board, index) => {
       if (index !== activeBoardIndex) return board;
       const items = [...board.items];
@@ -126,23 +119,20 @@ export const useBoards = () => {
       }
       return { ...board, items };
     }));
-  }, [activeBoardIndex]);
+  }, [activeBoardIndex, boards, pushHistory]);
 
   const handleReorderItem = useCallback((id: string, direction: 'up' | 'down' | 'front' | 'back') => {
+    pushHistory(boards);
     setBoards(prev => prev.map((board, index) => {
       if (index !== activeBoardIndex) return board;
       const items = [...board.items];
       const itemIndex = items.findIndex(item => item.id === id);
       if (itemIndex === -1) return board;
-
       const [item] = items.splice(itemIndex, 1);
-
       if (direction === 'up') {
-        // Move one step forward (towards the end of the array)
         const newIndex = Math.min(items.length, itemIndex + 1);
         items.splice(newIndex, 0, item);
       } else if (direction === 'down') {
-        // Move one step backward (towards the start of the array)
         const newIndex = Math.max(0, itemIndex - 1);
         items.splice(newIndex, 0, item);
       } else if (direction === 'front') {
@@ -150,36 +140,32 @@ export const useBoards = () => {
       } else if (direction === 'back') {
         items.unshift(item);
       }
-
       return { ...board, items };
     }));
-  }, [activeBoardIndex]);
+  }, [activeBoardIndex, boards, pushHistory]);
 
   const handleSendItemToBoard = useCallback((itemId: string, targetBoardIndex: number) => {
     if (targetBoardIndex === activeBoardIndex) return;
+    pushHistory(boards);
     setBoards(prevBoards => {
       const currentBoard = prevBoards[activeBoardIndex];
       const itemToSend = currentBoard.items.find(item => item.id === itemId);
       if (!itemToSend) return prevBoards;
       const newBoards = [...prevBoards];
-      newBoards[activeBoardIndex] = {
-        ...currentBoard,
-        items: currentBoard.items.filter(item => item.id !== itemId),
-      };
+      newBoards[activeBoardIndex] = { ...currentBoard, items: currentBoard.items.filter(item => item.id !== itemId) };
       const destinationBoard = newBoards[targetBoardIndex];
-      newBoards[targetBoardIndex] = {
-        ...destinationBoard,
-        items: [...destinationBoard.items, itemToSend],
-      };
+      newBoards[targetBoardIndex] = { ...destinationBoard, items: [...destinationBoard.items, itemToSend] };
       return newBoards;
     });
-  }, [activeBoardIndex]);
+  }, [activeBoardIndex, boards, pushHistory]);
 
   const handleAddBoard = useCallback(() => {
+    pushHistory(boards);
     setBoards(prev => [...prev, createNewBoard()]);
-  }, []);
+  }, [boards, pushHistory]);
 
   const handleRemoveBoard = useCallback((index: number) => {
+    pushHistory(boards);
     setBoards(prev => {
       if (prev.length <= 1) return prev;
       const newBoards = prev.filter((_, i) => i !== index);
@@ -188,33 +174,37 @@ export const useBoards = () => {
       }
       return newBoards;
     });
-  }, [activeBoardIndex]);
+  }, [activeBoardIndex, boards, pushHistory]);
 
   const handleGroupItems = useCallback((itemIds: string[]) => {
     if (itemIds.length < 2) return;
+    pushHistory(boards);
     const groupId = `group-${Date.now()}`;
     setBoards(prev => prev.map((board, index) =>
       index === activeBoardIndex
         ? { ...board, items: board.items.map(item => itemIds.includes(item.id) ? { ...item, groupId } : item) }
         : board
     ));
-  }, [activeBoardIndex]);
+  }, [activeBoardIndex, boards, pushHistory]);
 
   const handleUngroupItems = useCallback((itemIds: string[]) => {
+    pushHistory(boards);
     setBoards(prev => prev.map((board, index) =>
       index === activeBoardIndex
         ? { ...board, items: board.items.map(item => itemIds.includes(item.id) ? { ...item, groupId: undefined } : item) }
         : board
     ));
-  }, [activeBoardIndex]);
+  }, [activeBoardIndex, boards, pushHistory]);
 
   const handleUpdateBoardSettings = useCallback((settings: Partial<Board>) => {
+    pushHistory(boards);
     setBoards(prev => prev.map((board, index) =>
       index === activeBoardIndex ? { ...board, ...settings } : board
     ));
-  }, [activeBoardIndex]);
+  }, [activeBoardIndex, boards, pushHistory]);
 
   const handleAddConnection = useCallback((fromId: string, toId: string) => {
+    pushHistory(boards);
     setBoards(prev => prev.map((board, index) => {
       if (index !== activeBoardIndex) return board;
       const connections = board.connections || [];
@@ -223,25 +213,18 @@ export const useBoards = () => {
       }
       return {
         ...board,
-        connections: [...connections, {
-          id: `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          fromId,
-          toId,
-          color: 'var(--pixel-highlight-color, #ffaa00)'
-        }]
+        connections: [...connections, { id: `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, fromId, toId, color: 'var(--pixel-highlight-color, #ffaa00)' }]
       };
     }));
-  }, [activeBoardIndex]);
+  }, [activeBoardIndex, boards, pushHistory]);
 
   const handleRemoveConnection = useCallback((connectionId: string) => {
+    pushHistory(boards);
     setBoards(prev => prev.map((board, index) => {
       if (index !== activeBoardIndex) return board;
-      return {
-        ...board,
-        connections: (board.connections || []).filter(c => c.id !== connectionId)
-      };
+      return { ...board, connections: (board.connections || []).filter(c => c.id !== connectionId) };
     }));
-  }, [activeBoardIndex]);
+  }, [activeBoardIndex, boards, pushHistory]);
 
   return {
     isBoardsLoaded,
@@ -262,6 +245,11 @@ export const useBoards = () => {
     handleRemoveBoard,
     handleUpdateBoardSettings,
     handleAddConnection,
-    handleRemoveConnection
+    handleRemoveConnection,
+    canUndo,
+    canRedo,
+    undo,
+    redo,
+    pushHistory
   };
 };

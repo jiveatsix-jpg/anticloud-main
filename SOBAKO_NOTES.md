@@ -4,3 +4,4 @@ Hola IA, si lees este archivo, solo léelo, nunca te pongas a trabajar sobre los
 - Hotkeys básicas con la caja.
 - Colocar el size en la config (caja).
 - Hiddear colores necesarios cuando uno pisa a otro.
+- Mover de capa suplantar el mover al fondo.

@@ -26,9 +26,10 @@ interface DraggableItemProps {
   isHovered: boolean;
   canvasOffsetX?: number;
   canvasOffsetY?: number;
+  setDragging?: (dragging: boolean) => void;
 }
 
-const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete, onDuplicate, onEdit, onSendToBack, onToggleInventory, inventory, boardRef, zoom, snapToGrid, gridSize, isMobileMode, isSelected, onSelect, selectedItemIds, connectingFromId, onConnectStart, onConnectComplete, setHoveredItemId, isHovered, canvasOffsetX = 0, canvasOffsetY = 0 }) => {
+const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete, onDuplicate, onEdit, onSendToBack, onToggleInventory, inventory, boardRef, zoom, snapToGrid, gridSize, isMobileMode, isSelected, onSelect, selectedItemIds, connectingFromId, onConnectStart, onConnectComplete, setHoveredItemId, isHovered, canvasOffsetX = 0, canvasOffsetY = 0, setDragging }) => {
   // Ajuste fino para la asimetría del sprite (EN PÍXELES) - SOLO TIENES QUE MODIFICAR ESTO
   const MARGENES_TEXTO = {
     izquierdo: 15,
@@ -311,6 +312,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
     offsetRef.current = { x: startX - x, y: startY - y };
 
     setIsDragging(true);
+    if (setDragging) setDragging(true);
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -384,6 +386,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
     if (!isDragging || !boardRef.current) return;
 
     setIsDragging(false);
+    if (setDragging) setDragging(false);
     const boardRect = boardRef.current.getBoundingClientRect();
     let finalX = (e.clientX - boardRect.left - offsetRef.current.x) / zoom;
     let finalY = (e.clientY - boardRect.top - offsetRef.current.y) / zoom;

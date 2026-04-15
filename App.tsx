@@ -33,7 +33,8 @@ const App: React.FC = () => {
     boards, setBoards, activeBoardIndex, setActiveBoardIndex, activeBoard,
     handleUpdateItem, handleDeleteItem, handleDuplicateItem,
     handleSendItemToBack, handleReorderItem, handleGroupItems, handleUngroupItems, handleSendItemToBoard, handleAddBoard, handleRemoveBoard,
-    handleUpdateBoardSettings, handleAddConnection, handleRemoveConnection
+    handleUpdateBoardSettings, handleAddConnection, handleRemoveConnection,
+    canUndo, canRedo, undo, redo, pushHistory
   } = useBoards();
 
   const {
@@ -134,7 +135,7 @@ const App: React.FC = () => {
     selectedItemIds, setSelectedItemIds, clipboard, setClipboard,
     setIsCapturing, setEditingItem, setTitleImages, setTextboxImages,
     setPixelImages, setSpriteImages,
-    canvasOffsetX, canvasOffsetY
+    canvasOffsetX, canvasOffsetY, pushHistory
   });
 
   const {
@@ -283,6 +284,39 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleDebugKey);
     return () => window.removeEventListener('keydown', handleDebugKey);
   }, []);
+
+  // Undo/Redo: Ctrl+Z / Ctrl+Shift+Z
+  useEffect(() => {
+    const handleUndoRedo = (e: KeyboardEvent) => {
+      console.log('[APP] KeyDown', { key: e.key, ctrlKey: e.ctrlKey, shiftKey: e.shiftKey, canUndo, canRedo });
+      
+      if (
+        document.activeElement?.tagName === 'INPUT' || 
+        document.activeElement?.tagName === 'TEXTAREA' ||
+        (document.activeElement as HTMLElement)?.isContentEditable
+      ) return;
+
+      if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        console.log('[APP] Undo triggered', { canUndo });
+        if (canUndo) {
+          const prevBoards = undo();
+          console.log('[APP] Undo result', { hasResult: !!prevBoards, itemCount: prevBoards?.[0]?.items.length });
+          if (prevBoards) setBoards(prevBoards);
+        }
+      } else if (e.ctrlKey && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        console.log('[APP] Redo triggered', { canRedo });
+        if (canRedo) {
+          const nextBoards = redo();
+          console.log('[APP] Redo result', { hasResult: !!nextBoards, itemCount: nextBoards?.[0]?.items.length });
+          if (nextBoards) setBoards(nextBoards);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleUndoRedo);
+    return () => window.removeEventListener('keydown', handleUndoRedo);
+  }, [undo, redo, setBoards, canUndo, canRedo]);
 
   const hasInitializedCamera = useRef(false);
 
