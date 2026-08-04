@@ -23,6 +23,29 @@ export const ASSET_SLOTS = 18;
 export const DEFAULT_BOX_IMAGE_URL = '/assets/sprites/box.png';
 export const DEFAULT_BOX_BORDER_SLICE = { top: 18, right: 31, bottom: 24, left: 28 };
 
+// Marco redimensionable (borde 9-slice con centro transparente).
+export const DEFAULT_FRAME_IMAGE_URL = '/assets/sprites/frame.png';
+export const DEFAULT_FRAME_BORDER_SLICE = { top: 16, right: 16, bottom: 16, left: 16 };
+
+export interface FrameStyle {
+  id: string;
+  label: string;
+  url: string;
+}
+
+export const FRAME_STYLES: FrameStyle[] = [
+  { id: 'wood', label: 'Madera', url: '/assets/sprites/frame-wood.png' },
+  { id: 'gold', label: 'Oro', url: '/assets/sprites/frame-gold.png' },
+  { id: 'silver', label: 'Plata', url: '/assets/sprites/frame-silver.png' },
+  { id: 'iron', label: 'Hierro', url: '/assets/sprites/frame-iron.png' },
+  { id: 'crimson', label: 'Crimson', url: '/assets/sprites/frame-crimson.png' },
+  { id: 'ocean', label: 'Océano', url: '/assets/sprites/frame-ocean.png' },
+  { id: 'forest', label: 'Bosque', url: '/assets/sprites/frame-forest.png' },
+  { id: 'violet', label: 'Violeta', url: '/assets/sprites/frame-violet.png' },
+  { id: 'obsidian', label: 'Obsidiana', url: '/assets/sprites/frame-obsidian.png' },
+  { id: 'ice', label: 'Hielo', url: '/assets/sprites/frame-ice.png' },
+];
+
 // Available font faces for text items.
 export const FONT_FACES = [
   "'VT323', monospace",

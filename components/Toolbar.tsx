@@ -5,7 +5,7 @@ import {
   CropIcon, FullscreenIcon, BoardPrevIcon, BoardNextIcon, SmartphoneIcon,
   SelectIcon, DuplicateIcon, DeleteIcon, CopyIcon, PasteIcon, HelpIcon,
   CounterIcon, TimerIcon, FileIcon, CheckboxIcon, TextIcon, SuggestionIcon, XIcon,
-  ChevronDownIcon
+  ChevronDownIcon, FrameIcon
 } from './Icons';
 
 interface ToolbarProps {
@@ -43,7 +43,7 @@ interface ToolbarProps {
   handleAddCheckbox: () => void;
   handleAddPlainText: () => void;
   handleAddBox: () => void;
-  handleAddRichBox?: () => void;
+  handleAddFrame: () => void;
   setIsMobileMode: React.Dispatch<React.SetStateAction<boolean>>;
   handleStartTutorial: () => void;
   handleExportToDisk: () => void;
@@ -83,7 +83,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   handleAddCheckbox,
   handleAddPlainText,
   handleAddBox,
-  handleAddRichBox,
+  handleAddFrame,
   setIsMobileMode,
   handleStartTutorial,
   handleExportToDisk,
@@ -172,7 +172,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           {activeCategory === 'add' && (
             <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[220px] flex flex-col p-1 bg-slate-900 shadow-2xl max-h-[70vh] overflow-y-auto">
               <MenuItem icon={<TextboxIcon />} label="Caja" onClick={handleAddBox} color="bg-violet-600" />
-              <MenuItem icon={<TextboxIcon />} label="Caja (Exp.)" onClick={handleAddRichBox || (() => {})} color="bg-amber-600" />
+              <MenuItem icon={<FrameIcon />} label="Marco" onClick={handleAddFrame} color="bg-orange-700" />
               <div className="h-0.5 bg-slate-800 my-1" />
               <MenuItem icon={<PixelIcon />} label="Ilustración" onClick={() => setActiveModal('addPixel')} color="bg-yellow-500" />
               <MenuItem icon={<SpriteIcon />} label="Sprite" onClick={() => setActiveModal('addSprite')} color="bg-green-600" />

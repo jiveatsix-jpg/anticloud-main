@@ -27,3 +27,6 @@ src-tauri/target
 *.sln
 *.sw?
 /_master-worktree/
+
+# Local Netlify folder
+.netlify

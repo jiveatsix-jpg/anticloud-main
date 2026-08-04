@@ -43,6 +43,7 @@ export const PasteIcon = () => <svg {...iconProps}><path d="M16 4h2a2 2 0 0 1 2 
 export const PlusIcon = () => <svg {...iconProps}><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
 export const LayersIcon = () => <svg {...iconProps}><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>;
 export const SelectIcon = () => <svg {...iconProps}><path d="M5 3l3.057 14.943 4.443-4.443 4.5 4.5 2-2-4.5-4.5 4.443-4.443z" /></svg>;
+export const FrameIcon = () => <svg {...iconProps}><rect x="3" y="3" width="18" height="18" rx="1" ry="1"></rect><path d="M7 3v4h-4M17 3v4h4M7 21v-4H3M17 21v-4h4"></path><line x1="9" y1="9" x2="15" y2="15"></line><path d="M15 9l-3.5 1.5L15 15l1.5-3.5z" fill="currentColor" strokeWidth="0"></path></svg>;
 export const SmartphoneIcon = () => <svg {...iconProps}><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>;
 export const CounterIcon = () => <svg {...iconProps}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M8 7v10M12 7v10M16 7v10" /></svg>;
 export const MusicIcon = () => <svg {...iconProps}><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>;

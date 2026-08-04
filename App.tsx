@@ -7,6 +7,7 @@ import AddHarmonizationModal from './components/AddHarmonizationModal';
 import EditImagesModal from './components/EditImagesModal';
 
 import TextEditModal from './components/TextEditModal';
+import FrameEditModal from './components/FrameEditModal';
 import BoardSettingsModal from './components/BoardSettingsModal';
 import LayersModal from './components/LayersModal';
 import InventoryModal from './components/InventoryModal';
@@ -138,17 +139,36 @@ const App: React.FC = () => {
   const canvasHeight = 20000;
 
   const {
-    handleAddItem, handleAddCounter, handleAddTimer, handleAddFile, handleAddCheckbox, handleAddPlainText, handleAddBox, handleAddRichBox, handleBatchAddItems, handleDuplicateSelected, handleDeleteSelected, handleCopySelected,
+    handleAddItem, handleAddCounter, handleAddTimer, handleAddFile, handleAddCheckbox, handleAddPlainText, handleAddBox, handleAddFrame, handleBatchAddItems, handleDuplicateSelected, handleDeleteSelected, handleCopySelected,
     handlePaste, handleBackgroundFileChange, handleSaveAssetImages,
     handleScreenshot, handleStartEditItem, handleResetCamera
   } = useBoardActions({
     boards, setBoards, activeBoardIndex, viewportRef, boardRef, zoom,
     pixelSizeMultiplier, spriteSizeMultiplier, setActiveModal,
     selectedItemIds, setSelectedItemIds, clipboard, setClipboard,
+    selectedItemId, setSelectedItemId,
     setIsCapturing, setEditingItem, setTitleImages, setTextboxImages,
     setPixelImages, setSpriteImages,
     canvasOffsetX, canvasOffsetY, pushHistory
   });
+
+  const copyRef = useRef(handleCopySelected);
+  const pasteRef = useRef(handlePaste);
+  const duplicateRef = useRef(handleDuplicateSelected);
+  const deleteSelectedRef = useRef(handleDeleteSelected);
+  const setSelectedItemIdRef = useRef(setSelectedItemId);
+  const setSelectedItemIdsRef = useRef(setSelectedItemIds);
+  const zoomRef = useRef(zoom);
+  const setZoomRef = useRef(setZoom);
+
+  copyRef.current = handleCopySelected;
+  pasteRef.current = handlePaste;
+  duplicateRef.current = handleDuplicateSelected;
+  deleteSelectedRef.current = handleDeleteSelected;
+  setSelectedItemIdRef.current = setSelectedItemId;
+  setSelectedItemIdsRef.current = setSelectedItemIds;
+  zoomRef.current = zoom;
+  setZoomRef.current = setZoom;
 
   const {
     handleWheel, handlePanMouseDown, handlePanTouchStart, handleSelectionMouseDown,
@@ -273,7 +293,10 @@ const App: React.FC = () => {
       ) return;
 
       if (e.key === 'Delete') {
-        if (hoveredItemId) {
+        if (selectedItemIds.length > 0) {
+          e.preventDefault();
+          deleteSelectedRef.current();
+        } else if (hoveredItemId) {
           e.preventDefault();
           handleDeleteItem(hoveredItemId, setSelectedItemIds, setSelectedItemId);
           setHoveredItemId(null);
@@ -282,7 +305,7 @@ const App: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hoveredItemId, handleDeleteItem, setSelectedItemIds, setSelectedItemId, setHoveredItemId]);
+  }, [hoveredItemId, handleDeleteItem, setSelectedItemIds, setSelectedItemId, setHoveredItemId, selectedItemIds]);
 
   // Debug: F10 to clear all data and reload
   useEffect(() => {
@@ -326,6 +349,65 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleUndoRedo);
     return () => window.removeEventListener('keydown', handleUndoRedo);
   }, []);
+
+  // Keyboard shortcuts: copy/paste/duplicate, zoom, deselect
+  useEffect(() => {
+    const zoomBy = (factor: number) => {
+      const viewport = viewportRef.current;
+      const boardEl = boardRef.current;
+      if (!viewport || !boardEl) return;
+      const viewportRect = viewport.getBoundingClientRect();
+      const centerX = viewportRect.left + viewportRect.width / 2;
+      const centerY = viewportRect.top + viewportRect.height / 2;
+      const mouseX = centerX - viewportRect.left;
+      const mouseY = centerY - viewportRect.top;
+      const boardRefRect = boardEl.getBoundingClientRect();
+      const boardX = (centerX - boardRefRect.left) / zoomRef.current;
+      const boardY = (centerY - boardRefRect.top) / zoomRef.current;
+      const newZoom = Math.max(0.1, Math.min(zoomRef.current * factor, 5));
+      if (newZoom !== zoomRef.current) {
+        setZoomRef.current(newZoom);
+        viewport.scrollLeft = (boardX + canvasOffsetX) * newZoom - mouseX;
+        viewport.scrollTop = (boardY + canvasOffsetY) * newZoom - mouseY;
+      }
+    };
+
+    const handleShortcutKeyDown = (e: KeyboardEvent) => {
+      if (
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA' ||
+        (document.activeElement as HTMLElement)?.isContentEditable
+      ) return;
+
+      if (e.key === 'Escape') {
+        setSelectedItemIdRef.current(null);
+        setSelectedItemIdsRef.current([]);
+        return;
+      }
+
+      if (e.ctrlKey) {
+        if (e.key === 'c' || e.key === 'C') {
+          e.preventDefault();
+          copyRef.current();
+        } else if (e.key === 'v' || e.key === 'V') {
+          e.preventDefault();
+          pasteRef.current();
+        } else if (e.key === 'd' || e.key === 'D') {
+          e.preventDefault();
+          duplicateRef.current();
+        } else if (e.key === '+' || e.key === '=' || e.key === 'Add') {
+          e.preventDefault();
+          zoomBy(1.1);
+        } else if (e.key === '-' || e.key === 'Subtract') {
+          e.preventDefault();
+          zoomBy(0.9);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleShortcutKeyDown);
+    return () => window.removeEventListener('keydown', handleShortcutKeyDown);
+  }, [canvasOffsetX, canvasOffsetY]);
 
   const hasInitializedCamera = useRef(false);
 
@@ -489,7 +571,7 @@ const App: React.FC = () => {
         handleAddCheckbox={handleAddCheckbox}
         handleAddPlainText={handleAddPlainText}
         handleAddBox={handleAddBox}
-        handleAddRichBox={handleAddRichBox}
+        handleAddFrame={handleAddFrame}
         setIsMobileMode={setIsMobileMode}
         handleStartTutorial={handleStartTutorial}
         handleExportToDisk={handleExportToDisk}
@@ -773,7 +855,18 @@ const App: React.FC = () => {
         />
       )}
 
-      {editingItem && (
+      {editingItem && editingItem.type === ItemType.Frame && (
+        <FrameEditModal
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSave={(updated) => {
+            handleUpdateItem(updated, selectedItemIds);
+            setEditingItem(null);
+          }}
+        />
+      )}
+
+      {editingItem && editingItem.type !== ItemType.Frame && (
         <TextEditModal
           item={editingItem}
           onClose={() => setEditingItem(null)}
