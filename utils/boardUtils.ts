@@ -20,6 +20,12 @@ export const createNewBoard = (): Board => ({
   backgroundMode: 'expand',
 });
 
+export const isValidBoard = (board: unknown): board is Board => {
+  if (!board || typeof board !== 'object') return false;
+  const b = board as Partial<Board>;
+  return typeof b.id === 'string' && typeof b.backgroundUrl === 'string' && Array.isArray(b.items);
+};
+
 export const initializeTitleImageCollections = async (): Promise<TitleImageCollections> => {
   const storageKey = 'pixelBoard_titleImages_collections';
   let savedCollections: Partial<TitleImageCollections> = {};

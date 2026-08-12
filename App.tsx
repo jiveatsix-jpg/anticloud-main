@@ -34,20 +34,16 @@ const App: React.FC = () => {
     handleUpdateItem, handleDeleteItem, handleDuplicateItem,
     handleSendItemToBack, handleReorderItem, handleGroupItems, handleUngroupItems, handleSendItemToBoard, handleAddBoard, handleRemoveBoard,
     handleUpdateBoardSettings, handleAddConnection, handleRemoveConnection,
-    canUndo, canRedo, undo, redo, pushHistory, boardsRef, getIndex, getHistoryLength
+    canUndo, canRedo, undo, redo, pushHistory, boardsRef
   } = useBoards();
 
   const undoRef = useRef(undo);
   const redoRef = useRef(redo);
   const setBoardsRef = useRef(setBoards);
-  const getIndexRef = useRef(getIndex);
-  const getHistoryLengthRef = useRef(getHistoryLength);
 
   undoRef.current = undo;
   redoRef.current = redo;
   setBoardsRef.current = setBoards;
-  getIndexRef.current = getIndex;
-  getHistoryLengthRef.current = getHistoryLength;
 
   const {
     isInitializing, titleImages, setTitleImages, textboxImages, setTextboxImages,
@@ -300,26 +296,19 @@ const App: React.FC = () => {
   // Undo/Redo: Ctrl+Z / Ctrl+Shift+Z
   useEffect(() => {
     const handleUndoRedo = (e: KeyboardEvent) => {
-      console.log('[APP] KeyDown', { key: e.key, ctrlKey: e.ctrlKey, shiftKey: e.shiftKey });
-      
       if (
-        document.activeElement?.tagName === 'INPUT' || 
+        document.activeElement?.tagName === 'INPUT' ||
         document.activeElement?.tagName === 'TEXTAREA' ||
         (document.activeElement as HTMLElement)?.isContentEditable
       ) return;
 
       if (e.ctrlKey && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
         e.preventDefault();
-        console.log('[APP] Undo triggered', { getIndex: getIndexRef.current(), getHistoryLength: getHistoryLengthRef.current() });
-        const prevBoards = undoRef.current();
-        console.log('[APP] Undo result', { hasResult: !!prevBoards, itemCount: prevBoards?.[0]?.items.length });
+        const prevBoards = undoRef.current(boardsRef.current);
         if (prevBoards) setBoardsRef.current(prevBoards);
       } else if (e.ctrlKey && (e.key === 'z' || e.key === 'Z') && e.shiftKey) {
         e.preventDefault();
         const nextBoards = redoRef.current();
-        const idx = getIndexRef.current();
-        const len = getHistoryLengthRef.current();
-        console.log('[APP] Redo result', { hasResult: !!nextBoards, itemCount: nextBoards?.[0]?.items.length, getIndex: idx, getHistoryLength: len });
         if (nextBoards) setBoardsRef.current(nextBoards);
       }
     };
@@ -721,14 +710,6 @@ const App: React.FC = () => {
           images={spriteImages[activeModal.key]?.images || []}
           type="sprite"
           title={`Editar Imágenes de Sprite (${activeModal.key})`}
-        />
-      )}
-
-      {activeModal === 'boardSettings' && (
-        <BoardSettingsModal
-          board={activeBoard}
-          onClose={() => setActiveModal(null)}
-          onSave={handleUpdateBoardSettings}
         />
       )}
 

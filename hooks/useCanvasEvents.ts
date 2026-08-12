@@ -58,9 +58,14 @@ export const useCanvasEvents = ({
 
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     const newZoom = Math.max(0.1, Math.min(zoom * delta, 5));
-    
+
     if (newZoom !== zoom) {
       setZoom(newZoom);
+
+      // Mouse position relative to the viewport, for the scroll compensation below
+      const viewportRect = viewport.getBoundingClientRect();
+      const mouseX = e.clientX - viewportRect.left;
+      const mouseY = e.clientY - viewportRect.top;
 
       // Adjust scroll to keep the same board point under the mouse
       // New scroll = (board point * new zoom) - mouse position within viewport
@@ -241,8 +246,8 @@ export const useCanvasEvents = ({
   const handleSelectionMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!boardRef.current) return;
     const rect = boardRef.current.getBoundingClientRect();
-    const boardX = (e.clientX - rect.left) / zoom;
-    const boardY = (e.clientY - rect.top) / zoom;
+    let boardX = (e.clientX - rect.left) / zoom;
+    let boardY = (e.clientY - rect.top) / zoom;
     if (isGridVisible) {
       boardX = Math.round(boardX / GRID_SIZE) * GRID_SIZE;
       boardY = Math.round(boardY / GRID_SIZE) * GRID_SIZE;

@@ -1,5 +1,10 @@
 import { get, set, del, clear } from 'idb-keyval';
 
+// Writes to the same key are fire-and-forget from callers, so without
+// serialization two concurrent setItem calls for the same key could resolve
+// out of order and leave a stale value persisted. Chain them per key instead.
+const pendingWrites = new Map<string, Promise<void>>();
+
 export const storage = {
   async clearAll(): Promise<void> {
     try {
@@ -30,19 +35,25 @@ export const storage = {
   },
 
   async setItem(key: string, value: string): Promise<void> {
-    try {
-      await set(key, value);
-      // Borrar la copia de localStorage si existe para ahorrar espacio
-      localStorage.removeItem(key);
-    } catch (e) {
-      console.error(`ANTI_CLOUD Error guardando ${key} en IndexedDB:`, e);
-      // Fallback estricto a localStorage si IndexedDB falla
+    const previous = pendingWrites.get(key) || Promise.resolve();
+    const write = previous.then(async () => {
       try {
-        localStorage.setItem(key, value);
-      } catch (err) {
-        console.error("ANTI_CLOUD Alerta Crítica: LocalStorage quota exceeded.", err);
+        await set(key, value);
+        // Borrar la copia de localStorage si existe para ahorrar espacio
+        localStorage.removeItem(key);
+      } catch (e) {
+        console.error(`ANTI_CLOUD Error guardando ${key} en IndexedDB:`, e);
+        // Fallback estricto a localStorage si IndexedDB falla
+        try {
+          localStorage.setItem(key, value);
+        } catch (err) {
+          console.error("ANTI_CLOUD Alerta Crítica: LocalStorage quota exceeded.", err);
+        }
       }
-    }
+    });
+    pendingWrites.set(key, write);
+    await write;
+    if (pendingWrites.get(key) === write) pendingWrites.delete(key);
   },
 
   async removeItem(key: string): Promise<void> {

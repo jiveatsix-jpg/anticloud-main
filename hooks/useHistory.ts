@@ -9,42 +9,40 @@ export const useHistory = () => {
 
   const pushHistory = useCallback((currentBoards: Board[]) => {
     const cloned = JSON.parse(JSON.stringify(currentBoards));
-    console.log('[HISTORY] pushHistory', { clonedLength: cloned.length, itemCount: cloned[0]?.items.length });
-    
+
     historyRef.current = historyRef.current.slice(0, indexRef.current);
     historyRef.current.push(cloned);
-    
+
     indexRef.current = historyRef.current.length;
-    console.log('[HISTORY] after push', { index: indexRef.current, length: historyRef.current.length });
     forceUpdate(n => n + 1);
   }, []);
 
-  const undo = useCallback((): Board[] | null => {
-    if (isOperatingRef.current) return null;
+  const undo = useCallback((currentBoards: Board[]): Board[] | null => {
+    if (isOperatingRef.current || indexRef.current <= 0) return null;
     isOperatingRef.current = true;
-    
-    console.log('[HISTORY] undo', { index: indexRef.current, length: historyRef.current.length });
-    if (indexRef.current > 0) {
-      indexRef.current -= 1;
-      const result = historyRef.current[indexRef.current];
-      console.log('[HISTORY] undo result', { index: indexRef.current, itemCount: result?.[0]?.items.length });
-      forceUpdate(n => n + 1);
-      setTimeout(() => { isOperatingRef.current = false; }, 50);
-      return result;
+
+    // The state produced by the most recent edit is only ever held in live
+    // component state, never in historyRef (pushHistory stores the state
+    // *before* each edit). Capture it here, the first time we step back
+    // from the tip, so redo() has somewhere to go back to.
+    if (indexRef.current === historyRef.current.length) {
+      historyRef.current.push(JSON.parse(JSON.stringify(currentBoards)));
     }
-    isOperatingRef.current = false;
-    return null;
+
+    indexRef.current -= 1;
+    const result = historyRef.current[indexRef.current];
+    forceUpdate(n => n + 1);
+    setTimeout(() => { isOperatingRef.current = false; }, 50);
+    return result;
   }, []);
 
   const redo = useCallback((): Board[] | null => {
     if (isOperatingRef.current) return null;
     isOperatingRef.current = true;
-    
-    console.log('[HISTORY] redo', { index: indexRef.current, length: historyRef.current.length });
+
     if (indexRef.current < historyRef.current.length - 1) {
       const result = historyRef.current[indexRef.current + 1];
       indexRef.current += 1;
-      console.log('[HISTORY] redo result', { index: indexRef.current, itemCount: result?.[0]?.items.length });
       forceUpdate(n => n + 1);
       setTimeout(() => { isOperatingRef.current = false; }, 50);
       return result;

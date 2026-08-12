@@ -175,7 +175,7 @@ export const useBoardActions = ({
       initialX += (idx - (items.length - 1) / 2) * (itemWidth + 20);
 
       const newItem: BoardItem = {
-        id: `item_${now}_${idx}`,
+        id: `item_${now}_${idx}_${Math.random().toString(36).slice(2, 9)}`,
         type: item.type,
         imageUrl: item.imageUrl,
         x: initialX,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Board, BoardItem } from '../types';
-import { createNewBoard } from '../utils/boardUtils';
+import { createNewBoard, isValidBoard } from '../utils/boardUtils';
 import { GRID_SIZE } from '../constants';
 import { storage } from '../utils/storageUtils';
 import { useHistory } from './useHistory';
@@ -10,7 +10,7 @@ export const useBoards = () => {
   const [boards, setBoards] = useState<Board[]>([createNewBoard()]);
   const [activeBoardIndex, setActiveBoardIndex] = useState(0);
 
-  const { pushHistory, undo, redo, canUndo, canRedo, getIndex, getHistoryLength } = useHistory();
+  const { pushHistory, undo, redo, canUndo, canRedo } = useHistory();
   
   const boardsRef = useRef(boards);
   boardsRef.current = boards;
@@ -21,8 +21,9 @@ export const useBoards = () => {
         const savedBoards = await storage.getItem('pixelBoard_savedBoards');
         if (savedBoards) {
           const parsed = JSON.parse(savedBoards);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setBoards(parsed);
+          if (Array.isArray(parsed)) {
+            const validBoards = parsed.filter(isValidBoard);
+            if (validBoards.length > 0) setBoards(validBoards);
           }
         }
         const savedIndex = await storage.getItem('pixelBoard_activeBoardIndex');
@@ -182,7 +183,7 @@ export const useBoards = () => {
   const handleGroupItems = useCallback((itemIds: string[]) => {
     if (itemIds.length < 2) return;
     pushHistory(boards);
-    const groupId = `group-${Date.now()}`;
+    const groupId = `group-${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     setBoards(prev => prev.map((board, index) =>
       index === activeBoardIndex
         ? { ...board, items: board.items.map(item => itemIds.includes(item.id) ? { ...item, groupId } : item) }
@@ -254,8 +255,6 @@ export const useBoards = () => {
     undo,
     redo,
     pushHistory,
-    boardsRef,
-    getIndex,
-    getHistoryLength
+    boardsRef
   };
 };
