@@ -1,5 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import { ItemType, BoardItem, Board, TitleCollectionKey, TextboxCollectionKey } from '../types';
+import { ModalState } from './useUIState';
 import { FONT_FACES, GRID_SIZE, DEFAULT_TEXTBOX_IMAGE_URLS, DEFAULT_BOX_IMAGE_URL, DEFAULT_BOX_BORDER_SLICE, DEFAULT_FRAME_IMAGE_URL, DEFAULT_FRAME_BORDER_SLICE } from '../constants';
 import { createNewBoard } from '../utils/boardUtils';
 import { captureBoardToCanvas } from '../utils/canvasUtils';
@@ -13,7 +14,7 @@ interface UseBoardActionsProps {
   zoom: number;
   pixelSizeMultiplier: string;
   spriteSizeMultiplier: string;
-  setActiveModal: (modal: any) => void;
+  setActiveModal: React.Dispatch<React.SetStateAction<ModalState>>;
   selectedItemIds: string[];
   setSelectedItemIds: React.Dispatch<React.SetStateAction<string[]>>;
   selectedItemId: string | null;

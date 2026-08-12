@@ -10,7 +10,7 @@ interface AddElementModalProps {
   onAdd: (imageUrl: string) => void;
   onClose: () => void;
   title: string;
-  onEditImages: (key: string) => void;
+  onEditImages?: (key: string) => void;
   showCollectionSelector?: boolean;
   collectionKeys?: string[];
   activeCollectionKey?: string;
@@ -172,9 +172,11 @@ const AddElementModal: React.FC<AddElementModalProps> = ({
                 <button onClick={handleAdd} className="pixel-button text-xl px-6 py-2 bg-green-700 hover:bg-green-600" disabled={availableImages.length === 0}>
                     {addButtonLabel || 'Añadir'}
                 </button>
-                <button onClick={() => onEditImages(activeCollectionKey || '')} className="pixel-button p-3" title="Editar Imágenes">
-                    <SettingsIcon />
-                </button>
+                {onEditImages && (
+                    <button onClick={() => onEditImages(activeCollectionKey || '')} className="pixel-button p-3" title="Editar Imágenes">
+                        <SettingsIcon />
+                    </button>
+                )}
             </div>
         </div>
       </div>

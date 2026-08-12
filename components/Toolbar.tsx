@@ -1,4 +1,5 @@
 import React from 'react';
+import { ModalState } from '../hooks/useUIState';
 import {
   PlusIcon, TitleIcon, TextboxIcon, PixelIcon, SpriteIcon, SparklesIcon,
   MusicIcon, LayersIcon, SettingsIcon, GridIcon, PaletteIcon, CameraIcon,
@@ -14,7 +15,7 @@ interface ToolbarProps {
   handleCategoryEnter: (category: string) => void;
   handleCategoryLeave: () => void;
   setActiveCategory: (category: string | null) => void;
-  setActiveModal: (modal: any) => void;
+  setActiveModal: React.Dispatch<React.SetStateAction<ModalState>>;
   backgroundInputRef: React.RefObject<HTMLInputElement>;
   isGridVisible: boolean;
   setIsGridVisible: React.Dispatch<React.SetStateAction<boolean>>;

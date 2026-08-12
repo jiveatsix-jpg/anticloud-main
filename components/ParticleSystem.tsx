@@ -20,7 +20,7 @@ interface ParticleSystemProps {
 const ParticleSystem: React.FC<ParticleSystemProps> = ({ type, width, height }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particles = useRef<Particle[]>([]);
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (type === 'none') {
@@ -74,10 +74,6 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({ type, width, height }) 
         p.x += p.vx;
         p.y += p.vy;
         p.life++;
-
-        if (type === 'fire') {
-          p.size *= 0.98;
-        }
 
         ctx.fillStyle = p.color;
         if (type === 'rain') {

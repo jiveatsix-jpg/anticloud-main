@@ -579,7 +579,7 @@ const App: React.FC = () => {
           activeCollectionKey={activeCounterKey}
           onCollectionChange={(key) => setActiveCounterKey(key as TitleCollectionKey)}
           onAdd={(imageUrl) => handleAddItemWithLog(ItemType.Counter, imageUrl)}
-          onEditImages={(key) => setActiveModal({ type: 'editTitleImages', key })}
+          onEditImages={(key) => setActiveModal({ type: 'editTitleImages', key: key as TitleCollectionKey })}
         />
       )}
 
@@ -599,7 +599,7 @@ const App: React.FC = () => {
             isTimerRunning: false,
             text: '00:00'
           })}
-          onEditImages={(key) => setActiveModal({ type: 'editTitleImages', key })}
+          onEditImages={(key) => setActiveModal({ type: 'editTitleImages', key: key as TitleCollectionKey })}
         />
       )}
 
@@ -630,7 +630,7 @@ const App: React.FC = () => {
             checked: false,
             text: 'Tarea'
           })}
-          onEditImages={(key) => setActiveModal({ type: 'editTitleImages', key })}
+          onEditImages={(key) => setActiveModal({ type: 'editTitleImages', key: key as TitleCollectionKey })}
         />
       )}
 
@@ -648,7 +648,7 @@ const App: React.FC = () => {
             textColor: '#FFFFFF',
             textShadow: false
           })}
-          onEditImages={(key) => setActiveModal({ type: 'editTitleImages', key })}
+          onEditImages={(key) => setActiveModal({ type: 'editTitleImages', key: key as TitleCollectionKey })}
         />
       )}
 
@@ -662,7 +662,7 @@ const App: React.FC = () => {
           activeCollectionKey={activeTitleKey}
           onCollectionChange={(key) => setActiveTitleKey(key as TitleCollectionKey)}
           onAdd={(imageUrl) => handleAddItemWithLog(ItemType.Title, imageUrl)}
-          onEditImages={(key) => setActiveModal({ type: 'editTitleImages', key })}
+          onEditImages={(key) => setActiveModal({ type: 'editTitleImages', key: key as TitleCollectionKey })}
         />
       )}
 
@@ -676,7 +676,7 @@ const App: React.FC = () => {
           activeCollectionKey={activeTextboxKey}
           onCollectionChange={(key) => setActiveTextboxKey(key as TextboxCollectionKey)}
           onAdd={(imageUrl) => handleAddItemWithLog(ItemType.Textbox, imageUrl)}
-          onEditImages={(key) => setActiveModal({ type: 'editTextboxImages', key })}
+          onEditImages={(key) => setActiveModal({ type: 'editTextboxImages', key: key as TextboxCollectionKey })}
         />
       )}
 

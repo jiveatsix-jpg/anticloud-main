@@ -210,7 +210,8 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
                 const toY = toItem.y + toItem.height / 2;
 
                 return (
-                  <g key={conn.id} className="pointer-events-auto cursor-pointer" onClick={(e) => { e.stopPropagation(); handleRemoveConnection(conn.id); }} title="Eliminar Conexión">
+                  <g key={conn.id} className="pointer-events-auto cursor-pointer" onClick={(e) => { e.stopPropagation(); handleRemoveConnection(conn.id); }}>
+                    <title>Eliminar Conexión</title>
                     <line data-from={conn.fromId} data-to={conn.toId} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke="transparent" strokeWidth="20" />
                     <line
                       data-from={conn.fromId} data-to={conn.toId}
