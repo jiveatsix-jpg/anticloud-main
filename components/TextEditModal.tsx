@@ -260,7 +260,7 @@ const TextEditModal: React.FC<TextEditModalProps> = ({
     : 'none';
 
   const isTitle = item.type === ItemType.Title;
-  const isNineSliceItem = item.type === ItemType.Box || item.type === ItemType.RichBox;
+  const isNineSliceItem = item.type === ItemType.Box;
   const collections = isTitle ? titleImages : textboxImages;
   const collectionKeys = isTitle ? ['x1/2', 'x1', 'x2', 'x3', 'x4'] : ['x1', 'x4', 'x16'];
 

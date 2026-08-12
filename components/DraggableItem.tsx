@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { BoardItem, ItemType } from '../types';
-import { DeleteIcon, EditIcon, DuplicateIcon, SendToBackIcon, DpadUpIcon, DpadDownIcon, DpadLeftIcon, DpadRightIcon, PlayIcon, PauseIcon, ResetIcon, CopyIcon, PasteIcon, DownloadIcon, FileIcon, LinkIcon, CheckboxIcon } from './Icons';
+import { DeleteIcon, EditIcon, DuplicateIcon, SendToBackIcon, DpadUpIcon, DpadDownIcon, DpadLeftIcon, DpadRightIcon, PlayIcon, PauseIcon, ResetIcon, CopyIcon, PasteIcon, DownloadIcon, FileIcon, LinkIcon, CheckboxIcon, PaletteIcon } from './Icons';
 
 interface DraggableItemProps {
   item: BoardItem;
@@ -511,14 +511,16 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
     }
   }, [item.fileContent, item.fileName]);
 
-  const isTextEditable = item.type === ItemType.Title || item.type === ItemType.Textbox || item.type === ItemType.Counter || item.type === ItemType.Timer || item.type === ItemType.File || item.type === ItemType.Checkbox || item.type === ItemType.PlainText || item.type === ItemType.Box || item.type === ItemType.RichBox;
+  const isFrameItem = item.type === ItemType.Frame;
+
+  const isTextEditable = (item.type === ItemType.Title || item.type === ItemType.Textbox || item.type === ItemType.Counter || item.type === ItemType.Timer || item.type === ItemType.File || item.type === ItemType.Checkbox || item.type === ItemType.PlainText || item.type === ItemType.Box) && !isFrameItem;
   const isMusicItem = item.type === ItemType.Music;
   const isCounterItem = item.type === ItemType.Counter;
   const isTimerItem = item.type === ItemType.Timer;
   const isCheckboxItem = item.type === ItemType.Checkbox;
   const isPlainTextItem = item.type === ItemType.PlainText;
-  const isNineSliceItem = item.type === ItemType.Box || item.type === ItemType.RichBox;
-  const isBoxItem = item.type === ItemType.Box || item.type === ItemType.RichBox;
+  const isNineSliceItem = item.type === ItemType.Box;
+  const isBoxItem = item.type === ItemType.Box;
 
   const handleCheckboxToggle = useCallback(() => {
     onUpdate({ ...item, checked: !item.checked });
@@ -598,7 +600,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
     <div
       ref={dragRef}
       data-item-id={item.id}
-      className={`absolute group cursor-grab ${isSelected ? 'ring-4 ring-orange-500 ring-inset' : ''}`}
+      className={`absolute group cursor-grab ${isSelected ? 'ring-4 ring-orange-500 ring-inset' : ''} ${isFrameItem ? 'pointer-events-none' : ''}`}
       style={{
         left: item.x,
         top: item.y,
@@ -626,7 +628,36 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
       }}
     >
       <div className={`relative w-full h-full bg-cover bg-center select-none ${isDragging ? 'cursor-grabbing' : ''} ${effectClasses}`}>
-        {isNineSliceItem ? (
+        {isFrameItem ? (
+          // Marco 9-slice SIN relleno (centro transparente) para enmarcar elementos.
+          // Solo el borde es clicable; el interior deja pasar los clics a lo que haya debajo.
+          (() => {
+            const s = item.borderSlice || { top: 16, right: 16, bottom: 16, left: 16 };
+            const stripHandlers = {
+              onMouseDown: handleMouseDown,
+              onMouseEnter: () => setHoveredItemId(item.id),
+              onMouseLeave: () => setHoveredItemId(null),
+              onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+            };
+            return (
+              <>
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    borderStyle: 'solid',
+                    borderWidth: `${s.top}px ${s.right}px ${s.bottom}px ${s.left}px`,
+                    borderImage: `url("${currentImageUrl}") ${s.top} ${s.right} ${s.bottom} ${s.left} stretch`,
+                    imageRendering: 'pixelated',
+                  }}
+                />
+                <div {...stripHandlers} className="absolute left-0 right-0 cursor-grab" style={{ top: 0, height: s.top, zIndex: 5 }} />
+                <div {...stripHandlers} className="absolute left-0 right-0 cursor-grab" style={{ bottom: 0, height: s.bottom, zIndex: 5 }} />
+                <div {...stripHandlers} className="absolute top-0 bottom-0 cursor-grab" style={{ left: 0, width: s.left, zIndex: 5 }} />
+                <div {...stripHandlers} className="absolute top-0 bottom-0 cursor-grab" style={{ right: 0, width: s.right, zIndex: 5 }} />
+              </>
+            );
+          })()
+        ) : isNineSliceItem ? (
           // Renderizado 9-slice con border-image CSS
           (() => {
             const s = item.borderSlice || { top: 18, right: 31, bottom: 24, left: 28 };
@@ -692,7 +723,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
             e.preventDefault();
             setIsResizing(true);
           }}
-          className={`absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize z-20 transition-opacity ${controlClasses}`}
+          className={`absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize z-20 transition-opacity pointer-events-auto ${controlClasses}`}
           style={{
             background: 'linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.4) 50%)',
             borderBottomRightRadius: '2px'
@@ -703,6 +734,11 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
       <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex items-center gap-1 transition-opacity z-10 pointer-events-auto flex-wrap justify-center ${controlClasses}`}>
         {/* Object controls */}
         <div className="flex items-center p-1 gap-1 pixel-box bg-black/70">
+          {isFrameItem && (
+            <button onClick={() => onEdit(item)} className="pixel-button p-1 bg-pink-600 hover:bg-pink-500" title="Cambiar Estilo del Marco">
+              <PaletteIcon />
+            </button>
+          )}
           {(isTextEditable || isMusicItem) && (
             <>
               <button onClick={() => onEdit(item)} className="pixel-button p-1 bg-blue-600 hover:bg-blue-500" title="Editar Texto">

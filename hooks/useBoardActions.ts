@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import { ItemType, BoardItem, Board, TitleCollectionKey, TextboxCollectionKey } from '../types';
-import { FONT_FACES, GRID_SIZE, DEFAULT_TEXTBOX_IMAGE_URLS, DEFAULT_BOX_IMAGE_URL, DEFAULT_BOX_BORDER_SLICE } from '../constants';
+import { FONT_FACES, GRID_SIZE, DEFAULT_TEXTBOX_IMAGE_URLS, DEFAULT_BOX_IMAGE_URL, DEFAULT_BOX_BORDER_SLICE, DEFAULT_FRAME_IMAGE_URL, DEFAULT_FRAME_BORDER_SLICE } from '../constants';
 import { createNewBoard } from '../utils/boardUtils';
 import { captureBoardToCanvas } from '../utils/canvasUtils';
 
@@ -16,6 +16,8 @@ interface UseBoardActionsProps {
   setActiveModal: (modal: any) => void;
   selectedItemIds: string[];
   setSelectedItemIds: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedItemId: string | null;
+  setSelectedItemId: React.Dispatch<React.SetStateAction<string | null>>;
   clipboard: BoardItem[];
   setClipboard: React.Dispatch<React.SetStateAction<BoardItem[]>>;
   setIsCapturing: React.Dispatch<React.SetStateAction<boolean>>;
@@ -41,6 +43,8 @@ export const useBoardActions = ({
   setActiveModal,
   selectedItemIds,
   setSelectedItemIds,
+  selectedItemId,
+  setSelectedItemId,
   clipboard,
   setClipboard,
   setIsCapturing,
@@ -109,7 +113,7 @@ export const useBoardActions = ({
         fileContent: type === ItemType.File ? '' : undefined,
         checked: type === ItemType.Checkbox ? false : undefined,
         textColor: type === ItemType.PlainText ? '#FFFFFF' : '#000000',
-        fontFamily: (type === ItemType.Title || type === ItemType.Textbox || type === ItemType.Counter || type === ItemType.Timer || type === ItemType.PlainText || type === ItemType.Box || type === ItemType.RichBox) ? FONT_FACES[1] : FONT_FACES[0],
+        fontFamily: (type === ItemType.Title || type === ItemType.Textbox || type === ItemType.Counter || type === ItemType.Timer || type === ItemType.PlainText || type === ItemType.Box) ? FONT_FACES[1] : FONT_FACES[0],
         fontSize: 24,
         textShadow: type !== ItemType.PlainText,
         textShadowColor: '#FFFFFF',
@@ -205,7 +209,8 @@ export const useBoardActions = ({
   }, [activeBoardIndex, viewportRef, zoom, setActiveModal, setBoards, canvasOffsetX, canvasOffsetY]);
 
   const handleDuplicateSelected = useCallback(() => {
-    if (selectedItemIds.length === 0) return;
+    const ids = selectedItemIds.length > 0 ? selectedItemIds : (selectedItemId ? [selectedItemId] : []);
+    if (ids.length === 0) return;
     if (pushHistory) pushHistory(boards);
     const currentBoard = boards[activeBoardIndex];
     const currentItems = currentBoard?.items || [];
@@ -216,7 +221,7 @@ export const useBoardActions = ({
       const boardsCopy = [...prev];
       const boardToUpdate = boardsCopy[activeBoardIndex];
       if (!boardToUpdate) return prev;
-      const itemsToDuplicate = boardToUpdate.items.filter(item => selectedItemIds.includes(item.id));
+      const itemsToDuplicate = boardToUpdate.items.filter(item => ids.includes(item.id));
       const newItems = itemsToDuplicate.map(item => ({
         ...item,
         id: `item_${Date.now()}_${Math.random()}`,
@@ -227,26 +232,29 @@ export const useBoardActions = ({
       boardsCopy[activeBoardIndex] = { ...boardToUpdate, items: [...boardToUpdate.items, ...newItems] };
       return boardsCopy;
     });
-  }, [activeBoardIndex, selectedItemIds, setBoards]);
+  }, [activeBoardIndex, selectedItemIds, selectedItemId, setBoards]);
 
   const handleDeleteSelected = useCallback(() => {
-    if (selectedItemIds.length === 0) return;
+    const ids = selectedItemIds.length > 0 ? selectedItemIds : (selectedItemId ? [selectedItemId] : []);
+    if (ids.length === 0) return;
     if (pushHistory) pushHistory(boards);
     setBoards(prev => prev.map((board, index) => 
-      index === activeBoardIndex ? { ...board, items: board.items.filter(item => !selectedItemIds.includes(item.id)) } : board
+      index === activeBoardIndex ? { ...board, items: board.items.filter(item => !ids.includes(item.id)) } : board
     ));
     setSelectedItemIds([]);
-  }, [activeBoardIndex, selectedItemIds, setBoards, setSelectedItemIds]);
+    if (selectedItemId && !selectedItemIds.length) setSelectedItemId(null);
+  }, [activeBoardIndex, selectedItemIds, selectedItemId, setBoards, setSelectedItemIds, setSelectedItemId]);
 
   const handleCopySelected = useCallback(() => {
-    if (selectedItemIds.length === 0) return;
+    const ids = selectedItemIds.length > 0 ? selectedItemIds : (selectedItemId ? [selectedItemId] : []);
+    if (ids.length === 0) return;
     const activeBoard = boards[activeBoardIndex];
     if (!activeBoard) return;
-    const itemsToCopy = activeBoard.items.filter(item => selectedItemIds.includes(item.id));
+    const itemsToCopy = activeBoard.items.filter(item => ids.includes(item.id));
     if (itemsToCopy.length > 0) {
       setClipboard(JSON.parse(JSON.stringify(itemsToCopy)));
     }
-  }, [activeBoardIndex, boards, selectedItemIds, setClipboard]);
+  }, [activeBoardIndex, boards, selectedItemIds, selectedItemId, setClipboard]);
 
   const handlePaste = useCallback(() => {
     if (clipboard.length === 0) return;
@@ -371,13 +379,13 @@ export const useBoardActions = ({
     });
   }, [handleAddItem]);
 
-  const handleAddRichBox = useCallback(() => {
-    handleAddItem(ItemType.RichBox, DEFAULT_BOX_IMAGE_URL, {
-      borderSlice: DEFAULT_BOX_BORDER_SLICE,
-      text: '¡Doble click!',
-      htmlContent: '<span>¡Doble click!</span>',
-      width: 200,
-      height: 80
+  const handleAddFrame = useCallback(() => {
+    handleAddItem(ItemType.Frame, DEFAULT_FRAME_IMAGE_URL, {
+      borderSlice: DEFAULT_FRAME_BORDER_SLICE,
+      text: '',
+      width: 480,
+      height: 320,
+      textShadow: false,
     });
   }, [handleAddItem]);
 
@@ -404,7 +412,7 @@ export const useBoardActions = ({
     handleAddCheckbox,
     handleAddPlainText,
     handleAddBox,
-    handleAddRichBox,
+    handleAddFrame,
     handleBatchAddItems,
     handleDuplicateSelected,
     handleDeleteSelected,

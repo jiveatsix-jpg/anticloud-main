@@ -35,6 +35,8 @@ const LayersModal: React.FC<LayersModalProps> = ({
       case ItemType.File: return `Archivo: ${item.fileName}`;
       case ItemType.Checkbox: return `Tarea: ${item.text.substring(0, 15)}...`;
       case ItemType.PlainText: return `Texto: ${item.text.substring(0, 15)}...`;
+      case ItemType.Box: return `Caja: ${item.text.substring(0, 15)}...`;
+      case ItemType.Frame: return `Marco: ${Math.round(item.width)}x${Math.round(item.height)}`;
       default: return item.type;
     }
   };

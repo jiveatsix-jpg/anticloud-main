@@ -10,7 +10,7 @@ export enum ItemType {
   Checkbox = 'CHECKBOX',
   PlainText = 'PLAIN_TEXT',
   Box = 'BOX',
-  RichBox = 'RICH_BOX',
+  Frame = 'FRAME',
 }
 
 export interface TextFragment {
@@ -29,7 +29,6 @@ export interface BoardItem {
   width: number;
   height: number;
   text: string;
-  htmlContent?: string;
   textFragments?: TextFragment[];
   textColor?: string;
   fontFamily?: string;

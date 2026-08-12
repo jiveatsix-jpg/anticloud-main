@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import { Board, BoardItem } from '../types';
 import { GRID_SIZE } from '../constants';
 
@@ -38,10 +38,33 @@ export const useCanvasEvents = ({
   canvasOffsetY = 0
 }: UseCanvasEventsProps) => {
   const isPanning = useRef(false);
+  const isAltDownRef = useRef(false);
   const panStart = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
   const selectionStartPoint = useRef<{x: number, y: number} | null>(null);
   const scrollDirection = useRef<'up' | 'down' | 'left' | 'right' | null>(null);
   const scrollAnimationRef = useRef<number | null>(null);
+
+  // Mientras se mantiene ALT, el puntero actúa como modo selección (cursor de mira).
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Alt' && !isAltDownRef.current) {
+        isAltDownRef.current = true;
+        if (viewportRef.current && !isPanning.current) viewportRef.current.style.cursor = 'crosshair';
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Alt') {
+        isAltDownRef.current = false;
+        if (viewportRef.current && !isPanning.current) viewportRef.current.style.cursor = 'grab';
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [viewportRef]);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
@@ -51,6 +74,11 @@ export const useCanvasEvents = ({
 
     const boardRefRect = boardRef.current?.getBoundingClientRect();
     if (!boardRefRect) return;
+
+    const viewportRect = viewport.getBoundingClientRect();
+    // Mouse position within the viewport (the scrollable area)
+    const mouseX = e.clientX - viewportRect.left;
+    const mouseY = e.clientY - viewportRect.top;
 
     // Point on the board before scaling, relative to logical (0,0)
     const boardX = (e.clientX - boardRefRect.left) / zoom;
@@ -62,17 +90,12 @@ export const useCanvasEvents = ({
     if (newZoom !== zoom) {
       setZoom(newZoom);
 
-      // Mouse position relative to the viewport, for the scroll compensation below
-      const viewportRect = viewport.getBoundingClientRect();
-      const mouseX = e.clientX - viewportRect.left;
-      const mouseY = e.clientY - viewportRect.top;
-
-      // Adjust scroll to keep the same board point under the mouse
-      // New scroll = (board point * new zoom) - mouse position within viewport
-      viewport.scrollLeft = boardX * newZoom - mouseX;
-      viewport.scrollTop = boardY * newZoom - mouseY;
+      // Keep the same board point under the mouse:
+      // new scroll = (board point + origin offset) * new zoom - mouse position within viewport
+      viewport.scrollLeft = (boardX + canvasOffsetX) * newZoom - mouseX;
+      viewport.scrollTop = (boardY + canvasOffsetY) * newZoom - mouseY;
     }
-  }, [zoom, setZoom, viewportRef]);
+  }, [zoom, setZoom, viewportRef, boardRef, canvasOffsetX, canvasOffsetY]);
 
   const handlePanMouseMove = useCallback((e: MouseEvent) => {
     if (!isPanning.current || !viewportRef.current) return;
@@ -147,12 +170,12 @@ export const useCanvasEvents = ({
     }
     if ((e.target as HTMLElement).closest('.group') || (e.target as HTMLElement).closest('button')) return;
     setSelectedItemId(null);
-    if (!e.shiftKey && !isMultiSelectMode) setSelectedItemIds([]);
+    if (!e.shiftKey && !e.altKey && !isMultiSelectMode) setSelectedItemIds([]);
 
     const viewport = viewportRef.current;
     if (!viewport) return;
 
-    if (isMultiSelectMode || e.shiftKey) {
+    if (isMultiSelectMode || e.shiftKey || e.altKey) {
       const rect = boardRef.current?.getBoundingClientRect();
       if (!rect) return;
       const startX = (e.clientX - rect.left) / zoom;
