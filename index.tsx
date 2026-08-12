@@ -6,6 +6,14 @@ interface ErrorBoundaryProps { children: ReactNode; }
 interface ErrorBoundaryState { hasError: boolean; error: Error | null; errorInfo: ErrorInfo | null; }
 
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  // This project has no @types/react installed, so TypeScript can't see
+  // Component's own instance members (props/state/setState) at all; declare
+  // them explicitly so this file type-checks without pulling in real React
+  // types project-wide (which surfaces many unrelated latent type errors).
+  declare props: ErrorBoundaryProps;
+  declare state: ErrorBoundaryState;
+  declare setState: (state: Partial<ErrorBoundaryState>) => void;
+
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null, errorInfo: null };

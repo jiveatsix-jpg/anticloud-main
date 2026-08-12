@@ -137,7 +137,7 @@ const App: React.FC = () => {
   const {
     handleAddItem, handleAddCounter, handleAddTimer, handleAddFile, handleAddCheckbox, handleAddPlainText, handleAddBox, handleAddFrame, handleBatchAddItems, handleDuplicateSelected, handleDeleteSelected, handleCopySelected,
     handlePaste, handleBackgroundFileChange, handleSaveAssetImages,
-    handleScreenshot, handleStartEditItem, handleResetCamera
+    handleScreenshot, handleStartEditItem
   } = useBoardActions({
     boards, setBoards, activeBoardIndex, viewportRef, boardRef, zoom,
     pixelSizeMultiplier, spriteSizeMultiplier, setActiveModal,
@@ -167,7 +167,7 @@ const App: React.FC = () => {
   setZoomRef.current = setZoom;
 
   const {
-    handleWheel, handlePanMouseDown, handlePanTouchStart, handleSelectionMouseDown,
+    handleCenterContent, handlePanMouseDown, handlePanTouchStart, handleSelectionMouseDown,
     handleMoveStart, handleMoveEnd, handlePanMouseMove, handlePanMouseUp,
     handlePanTouchMove, handlePanTouchEnd, handleSelectionMouseMove,
     handleSelectionMouseUp, handleMultiSelectMouseMove, handleMultiSelectMouseUp
@@ -479,7 +479,6 @@ const App: React.FC = () => {
         zoom={zoom}
         isGridVisible={isGridVisible}
         isMultiSelectMode={isMultiSelectMode}
-        handleWheel={handleWheel}
         handlePanMouseDown={handlePanMouseDown}
         handlePanTouchStart={handlePanTouchStart}
         handleUpdateItem={handleUpdateItem}
@@ -514,9 +513,9 @@ const App: React.FC = () => {
       {/* Floating Home Button */}
       <div className="absolute top-16 right-6 z-40">
         <button
-          onClick={handleResetCamera}
+          onClick={handleCenterContent}
           className="p-3 bg-black/40 backdrop-blur-md border border-white/20 rounded-full text-white/70 hover:text-white hover:bg-white/10 hover:border-white/40 shadow-xl transition-all group overflow-hidden"
-          title="Centrar en Origen (0,0)"
+          title="Centrar en el contenido"
         >
           <div className="relative z-10">
             <HomeIcon />

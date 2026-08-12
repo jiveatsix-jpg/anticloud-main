@@ -127,7 +127,6 @@ export const useBoardActions = ({
         glitch: false,
         rainbow: false,
         scanlines: false,
-        pixelate: false,
         shake: false,
         pulse: false,
         blur: false,
@@ -389,21 +388,6 @@ export const useBoardActions = ({
     });
   }, [handleAddItem]);
 
-  const handleResetCamera = useCallback(() => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-    
-    // Target (0,0) logical origin accurately using absolute screen center
-    const targetX = (canvasOffsetX * zoom) - (window.innerWidth / 2);
-    const targetY = (canvasOffsetY * zoom) - (window.innerHeight / 2);
-
-    viewport.scrollTo({
-      left: targetX,
-      top: targetY,
-      behavior: 'smooth'
-    });
-  }, [viewportRef, zoom, canvasOffsetX, canvasOffsetY]);
-
   return {
     handleAddItem,
     handleAddCounter,
@@ -421,7 +405,6 @@ export const useBoardActions = ({
     handleBackgroundFileChange,
     handleSaveAssetImages,
     handleScreenshot,
-    handleStartEditItem,
-    handleResetCamera
+    handleStartEditItem
   };
 };

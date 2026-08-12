@@ -11,7 +11,6 @@ interface BoardCanvasProps {
   zoom: number;
   isGridVisible: boolean;
   isMultiSelectMode: boolean;
-  handleWheel: (e: React.WheelEvent) => void;
   handlePanMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void;
   handlePanTouchStart: (e: React.TouchEvent<HTMLDivElement>) => void;
   handleUpdateItem: (updatedItem: BoardItem, selectedItemIds: string[]) => void;
@@ -50,7 +49,6 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
   zoom,
   isGridVisible,
   isMultiSelectMode,
-  handleWheel,
   handlePanMouseDown,
   handlePanTouchStart,
   handleUpdateItem,
@@ -104,7 +102,6 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
       ref={viewportRef}
       id="tutorial-viewport"
       className={`w-full h-full overflow-auto no-scrollbar ${isMultiSelectMode ? 'cursor-crosshair' : 'cursor-grab'}`}
-      onWheel={handleWheel}
       onMouseDown={handlePanMouseDown}
       onTouchStart={handlePanTouchStart}
       onMouseMove={(e) => {

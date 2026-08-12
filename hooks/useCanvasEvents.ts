@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { Board, BoardItem } from '../types';
 import { GRID_SIZE } from '../constants';
 
@@ -44,6 +44,36 @@ export const useCanvasEvents = ({
   const scrollDirection = useRef<'up' | 'down' | 'left' | 'right' | null>(null);
   const scrollAnimationRef = useRef<number | null>(null);
 
+  // A zoom change resizes the scrollable content (canvasWidth/Height * zoom in
+  // BoardCanvas), which only takes effect once React commits the new `zoom`
+  // to the DOM. Setting scrollLeft/scrollTop synchronously in the same event
+  // that calls setZoom races that commit: the browser can clamp the scroll to
+  // the *old* content size for one frame, making an item appear to jump.
+  // Instead, stash the desired board point + zoom, and apply the scroll from
+  // a layout effect keyed on `zoom`, which always runs after the resize lands.
+  const pendingFocusRef = useRef<{ boardX: number; boardY: number; viewportX: number; viewportY: number } | null>(null);
+
+  const focusOnBoardPoint = useCallback((boardX: number, boardY: number, viewportX: number, viewportY: number, newZoom: number) => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    if (newZoom === zoom) {
+      viewport.scrollLeft = (boardX + canvasOffsetX) * newZoom - viewportX;
+      viewport.scrollTop = (boardY + canvasOffsetY) * newZoom - viewportY;
+      return;
+    }
+    pendingFocusRef.current = { boardX, boardY, viewportX, viewportY };
+    setZoom(newZoom);
+  }, [zoom, setZoom, viewportRef, canvasOffsetX, canvasOffsetY]);
+
+  useLayoutEffect(() => {
+    const focus = pendingFocusRef.current;
+    const viewport = viewportRef.current;
+    if (!focus || !viewport) return;
+    pendingFocusRef.current = null;
+    viewport.scrollLeft = (focus.boardX + canvasOffsetX) * zoom - focus.viewportX;
+    viewport.scrollTop = (focus.boardY + canvasOffsetY) * zoom - focus.viewportY;
+  }, [zoom, canvasOffsetX, canvasOffsetY, viewportRef]);
+
   // Mientras se mantiene ALT, el puntero actúa como modo selección (cursor de mira).
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -66,19 +96,19 @@ export const useCanvasEvents = ({
     };
   }, [viewportRef]);
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    
+  const handleWheel = useCallback((e: WheelEvent) => {
     const viewport = viewportRef.current;
     if (!viewport) return;
 
     const boardRefRect = boardRef.current?.getBoundingClientRect();
     if (!boardRefRect) return;
 
+    e.preventDefault();
+
     const viewportRect = viewport.getBoundingClientRect();
     // Mouse position within the viewport (the scrollable area)
-    const mouseX = e.clientX - viewportRect.left;
-    const mouseY = e.clientY - viewportRect.top;
+    const viewportX = e.clientX - viewportRect.left;
+    const viewportY = e.clientY - viewportRect.top;
 
     // Point on the board before scaling, relative to logical (0,0)
     const boardX = (e.clientX - boardRefRect.left) / zoom;
@@ -87,15 +117,55 @@ export const useCanvasEvents = ({
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     const newZoom = Math.max(0.1, Math.min(zoom * delta, 5));
 
-    if (newZoom !== zoom) {
-      setZoom(newZoom);
+    // Keep the same board point under the mouse.
+    focusOnBoardPoint(boardX, boardY, viewportX, viewportY, newZoom);
+  }, [zoom, boardRef, viewportRef, focusOnBoardPoint]);
 
-      // Keep the same board point under the mouse:
-      // new scroll = (board point + origin offset) * new zoom - mouse position within viewport
-      viewport.scrollLeft = (boardX + canvasOffsetX) * newZoom - mouseX;
-      viewport.scrollTop = (boardY + canvasOffsetY) * newZoom - mouseY;
+  // React always attaches its "wheel" root listener with { passive: true }
+  // (see react-dom's addTrappedEventListener), so e.preventDefault() inside a
+  // JSX onWheel handler is silently ignored: the browser's native scroll
+  // fires *in addition to* our own scrollLeft/scrollTop math below, and the
+  // two compete for the same viewport, which is what reads as zoom "jumps".
+  // Attaching the listener manually with passive: false makes preventDefault
+  // actually take effect.
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    viewport.addEventListener('wheel', handleWheel, { passive: false });
+    return () => viewport.removeEventListener('wheel', handleWheel);
+  }, [viewportRef, handleWheel]);
+
+  const handleCenterContent = useCallback(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const viewportX = viewport.clientWidth / 2;
+    const viewportY = viewport.clientHeight / 2;
+    const items = activeBoard.items;
+
+    if (items.length === 0) {
+      // Nothing to fit: just center on the logical origin at the current zoom.
+      focusOnBoardPoint(0, 0, viewportX, viewportY, zoom);
+      return;
     }
-  }, [zoom, setZoom, viewportRef, boardRef, canvasOffsetX, canvasOffsetY]);
+
+    const minX = Math.min(...items.map(i => i.x));
+    const minY = Math.min(...items.map(i => i.y));
+    const maxX = Math.max(...items.map(i => i.x + i.width));
+    const maxY = Math.max(...items.map(i => i.y + i.height));
+
+    const PADDING = 150; // logical px of breathing room around the content
+    const contentWidth = (maxX - minX) + PADDING * 2;
+    const contentHeight = (maxY - minY) + PADDING * 2;
+
+    const fitZoom = Math.max(0.1, Math.min(
+      viewport.clientWidth / contentWidth,
+      viewport.clientHeight / contentHeight,
+      2 // don't zoom in absurdly far for a single small item
+    ));
+
+    focusOnBoardPoint((minX + maxX) / 2, (minY + maxY) / 2, viewportX, viewportY, fitZoom);
+  }, [activeBoard, zoom, viewportRef, focusOnBoardPoint]);
 
   const handlePanMouseMove = useCallback((e: MouseEvent) => {
     if (!isPanning.current || !viewportRef.current) return;
@@ -304,7 +374,7 @@ export const useCanvasEvents = ({
   }, []);
 
   return {
-    handleWheel,
+    handleCenterContent,
     handlePanMouseDown,
     handlePanTouchStart,
     handleSelectionMouseDown,
