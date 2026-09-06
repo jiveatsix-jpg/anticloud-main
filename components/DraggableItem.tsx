@@ -581,7 +581,21 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
   const controlClasses = isMobileMode ? (isSelected ? 'opacity-100' : 'opacity-0') : 'opacity-0 group-hover:opacity-100';
 
   const neonGlowStyle = item.neonGlow
-    ? { filter: `drop-shadow(0 0 10px ${item.neonColor || '#00ff00'}) drop-shadow(0 0 20px ${item.neonColor || '#00ff00'})` }
+    ? (() => {
+        const c = item.neonColor || '#00ff00';
+        return {
+          filter: [
+            `drop-shadow(2px 2px 0 ${c})`,
+            `drop-shadow(-2px -2px 0 ${c})`,
+            `drop-shadow(2px -2px 0 ${c})`,
+            `drop-shadow(-2px 2px 0 ${c})`,
+            `drop-shadow(4px 0 0 ${c})`,
+            `drop-shadow(-4px 0 0 ${c})`,
+            `drop-shadow(0 4px 0 ${c})`,
+            `drop-shadow(0 -4px 0 ${c})`,
+          ].join(' ')
+        };
+      })()
     : {};
 
   const effectClasses = [
@@ -594,6 +608,9 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
     item.shake ? 'effect-shake' : '',
     item.pulse ? 'effect-pulse' : '',
     item.blur ? 'effect-blur' : '',
+    item.staticNoise ? 'effect-static' : '',
+    item.typewriter ? 'effect-typewriter' : '',
+    item.breathing ? 'effect-breathing' : '',
   ].filter(Boolean).join(' ');
 
   return (

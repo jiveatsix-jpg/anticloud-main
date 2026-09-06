@@ -52,6 +52,23 @@ const BOX_PALETTE_CONFIG = [
   { hex: '#AB5236', filter: 'hue-rotate(175deg) saturate(1.5) brightness(0.7)' },
   { hex: '#1D2B53', filter: 'hue-rotate(25deg) saturate(1.2) brightness(0.3)' },
   { hex: '#008751', filter: 'hue-rotate(316deg) saturate(1.5) brightness(0.5)' },
+  // Sweetie-16 (GrafxKid) added on top of the base PICO-8 set, same hue-rotate/saturate/brightness technique.
+  { hex: '#1a1c2c', filter: 'hue-rotate(30deg) saturate(0.65) brightness(0.25)' },
+  { hex: '#5d275d', filter: 'hue-rotate(97deg) saturate(1) brightness(0.45)' },
+  { hex: '#b13e53', filter: 'hue-rotate(146deg) saturate(1.2) brightness(0.8)' },
+  { hex: '#ef7d57', filter: 'hue-rotate(172deg) saturate(2.1) brightness(1.1)' },
+  { hex: '#ffcd75', filter: 'hue-rotate(195deg) saturate(1.6) brightness(1.55)' },
+  { hex: '#a7f070', filter: 'hue-rotate(251deg) saturate(2) brightness(1.2)' },
+  { hex: '#38b764', filter: 'hue-rotate(298deg) saturate(1.3) brightness(0.8)' },
+  { hex: '#257179', filter: 'hue-rotate(343deg) saturate(1.3) brightness(0.55)' },
+  { hex: '#29366f', filter: 'hue-rotate(26deg) saturate(1.15) brightness(0.5)' },
+  { hex: '#3b5dc9', filter: 'hue-rotate(23deg) saturate(1.4) brightness(0.9)' },
+  { hex: '#41a6f6', filter: 'hue-rotate(4deg) saturate(2.2) brightness(1.05)' },
+  { hex: '#73eff7', filter: 'hue-rotate(341deg) saturate(2.2) brightness(1.2)' },
+  { hex: '#f4f4f4', filter: 'grayscale(1) brightness(1.7)' },
+  { hex: '#94b0c2', filter: 'saturate(0.65) brightness(1.15)' },
+  { hex: '#566c86', filter: 'hue-rotate(10deg) saturate(0.55) brightness(0.75)' },
+  { hex: '#333c57', filter: 'hue-rotate(22deg) saturate(0.65) brightness(0.47)' },
 ];
 
 const TextEditModal: React.FC<TextEditModalProps> = ({
@@ -572,6 +589,36 @@ const TextEditModal: React.FC<TextEditModalProps> = ({
                       className="w-5 h-5"
                     />
                     <span className="text-lg">Desenfoque</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/5 rounded transition-colors border border-white/5">
+                    <input
+                      type="checkbox"
+                      name="staticNoise"
+                      checked={editedItem.staticNoise || false}
+                      onChange={handleInputChange}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-lg">Estática</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/5 rounded transition-colors border border-white/5">
+                    <input
+                      type="checkbox"
+                      name="typewriter"
+                      checked={editedItem.typewriter || false}
+                      onChange={handleInputChange}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-lg">Máquina de Escribir</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/5 rounded transition-colors border border-white/5">
+                    <input
+                      type="checkbox"
+                      name="breathing"
+                      checked={editedItem.breathing || false}
+                      onChange={handleInputChange}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-lg">Respiración</span>
                   </label>
                 </div>
               </div>

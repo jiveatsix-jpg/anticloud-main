@@ -58,6 +58,9 @@ export interface BoardItem {
   shake?: boolean;
   pulse?: boolean;
   blur?: boolean;
+  staticNoise?: boolean;
+  typewriter?: boolean;
+  breathing?: boolean;
   checked?: boolean;
   groupId?: string;
   borderSlice?: { top: number; right: number; bottom: number; left: number };
