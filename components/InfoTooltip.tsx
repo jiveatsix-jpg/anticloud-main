@@ -1,5 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+interface InfoContent {
+  label: string;
+  text: string;
+}
+
+function readInfo(el: Element): InfoContent | null {
+  const text = el.getAttribute('title') || el.getAttribute('aria-label');
+  if (!text) return null;
+  const label = (el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 40);
+  return { label, text };
+}
+
 /**
  * Cuadro flotante que, cuando `active` es true, muestra el `title` o
  * `aria-label` del elemento bajo el cursor. Reutiliza los textos que ya
@@ -7,14 +19,14 @@ import React, { useEffect, useRef, useState } from 'react';
  * cualquier control, incluidos los renderizados dentro de modales.
  */
 export default function InfoTooltip({ active }: { active: boolean }) {
-  const [text, setText] = useState<string | null>(null);
+  const [info, setInfo] = useState<InfoContent | null>(null);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const boxRef = useRef<HTMLDivElement>(null);
   const currentEl = useRef<Element | null>(null);
 
   useEffect(() => {
     if (!active) {
-      setText(null);
+      setInfo(null);
       currentEl.current = null;
       return;
     }
@@ -22,12 +34,12 @@ export default function InfoTooltip({ active }: { active: boolean }) {
     const onMove = (e: MouseEvent) => {
       const target = (e.target as Element)?.closest('[title], [aria-label]');
       if (!target) {
-        if (currentEl.current) { currentEl.current = null; setText(null); }
+        if (currentEl.current) { currentEl.current = null; setInfo(null); }
         return;
       }
       if (target !== currentEl.current) {
         currentEl.current = target;
-        setText(target.getAttribute('title') || target.getAttribute('aria-label'));
+        setInfo(readInfo(target));
       }
       setPos({ x: e.clientX, y: e.clientY });
     };
@@ -36,7 +48,7 @@ export default function InfoTooltip({ active }: { active: boolean }) {
     return () => document.removeEventListener('mousemove', onMove);
   }, [active]);
 
-  if (!active || !text) return null;
+  if (!active || !info) return null;
 
   const pad = 14;
   let left = pos.x + pad;
@@ -50,10 +62,19 @@ export default function InfoTooltip({ active }: { active: boolean }) {
   return (
     <div
       ref={boxRef}
-      className="fixed z-[999] max-w-[260px] p-2.5 pixel-panel bg-slate-900 border-2 border-amber-500 text-white font-mono text-xs leading-relaxed pointer-events-none"
-      style={{ left: Math.max(4, left), top: Math.max(4, top) }}
+      className="fixed z-[999] max-w-[260px] p-2.5 bg-slate-900 border-2 border-cyan-400 text-white text-xs leading-relaxed pointer-events-none"
+      style={{
+        left: Math.max(4, left), top: Math.max(4, top),
+        boxShadow: '4px 4px 0 rgba(0,0,0,.7)',
+        fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+      }}
     >
-      {text}
+      {info.label && (
+        <div className="font-bold text-red-500 border-b border-cyan-400/40 mb-1.5 pb-1">
+          {info.label}
+        </div>
+      )}
+      <div>{info.text}</div>
     </div>
   );
 }
