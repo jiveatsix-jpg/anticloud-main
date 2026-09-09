@@ -16,19 +16,25 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     elementId: 'tutorial-add-btn',
     title: 'Añadir Elementos',
-    text: 'Desde aquí puedes añadir todo tipo de objetos: desde Cajas hasta herramientas como Contadores y Checkboxes.',
+    text: 'Desde aquí puedes añadir todo tipo de objetos: desde Cajas y Marcos hasta Ilustraciones, Sprites y herramientas como Contadores o Checkboxes.',
     position: 'right',
   },
   {
     elementId: 'tutorial-add-btn',
-    title: 'Cajas',
-    text: 'Usa la "Caja" para crear áreas de texto con bordes que no se deforman. ¡Es el elemento base de la pizarra!',
+    title: 'Cajas y Marcos',
+    text: 'Usa la "Caja" para crear áreas de texto con bordes que no se deforman, o un "Marco" para delimitar zonas de tu pizarra. Son los elementos base para organizar tu contenido.',
+    position: 'right',
+  },
+  {
+    elementId: 'tutorial-add-btn',
+    title: 'Ilustraciones y Sprites',
+    text: 'Elige una "Ilustración" de la colección pixel-art o un "Sprite" animado para decorar tu pizarra con imágenes ya listas.',
     position: 'right',
   },
   {
     elementId: 'tutorial-add-btn',
     title: 'Herramientas Útiles',
-    text: 'También tienes Contadores para tus puntos, Temporizadores para tus retos y Archivos Inteligentes para guardar notas.',
+    text: 'También tienes Contadores para tus puntos, Temporizadores para tus retos, Archivos para guardar notas, Checkboxes para listas de tareas y Texto Plano cuando no necesitas bordes.',
     position: 'right',
   },
   {
@@ -46,7 +52,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     elementId: 'tutorial-view-btn',
     title: 'Personalización Visual',
-    text: 'Cambia el fondo de la pizarra, activa la cuadrícula para alinear objetos o prueba los diferentes Temas visuales.',
+    text: 'Cambia el fondo de la pizarra, activa la cuadrícula para alinear objetos, prueba los diferentes Temas visuales, o pasa a Modo Móvil si estás en una pantalla chica.',
     position: 'right',
   },
   {

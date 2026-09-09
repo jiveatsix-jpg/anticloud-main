@@ -221,12 +221,11 @@ const App: React.FC = () => {
       2: 'add',
       3: 'add',
       4: 'add',
-      5: 'add',
-      7: 'music',
-      8: 'music',
-      10: 'config',
-      11: 'config',
-      13: 'config',
+      5: 'music',
+      6: 'edit',
+      7: 'view',
+      8: 'export',
+      9: 'boards',
     };
 
     const category = stepToCategory[tutorialStep];
