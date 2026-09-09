@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { ItemType, TitleCollectionKey, TextboxCollectionKey, AssetCategory, BoardItem } from './types';
 import { FONT_FACES, THEMES } from './constants';
 import AddElementModal from './components/AddElementModal';
@@ -13,6 +13,7 @@ import LayersModal from './components/LayersModal';
 import InventoryModal from './components/InventoryModal';
 import SuggestionsModal from './components/SuggestionsModal';
 import TutorialGuide, { TUTORIAL_STEPS } from './components/TutorialGuide';
+import InfoTooltip from './components/InfoTooltip';
 import {
   PlusIcon, MusicIcon, LayersIcon, FileIcon, SettingsIcon, CameraIcon,
   BoardNextIcon, SelectIcon, SmartphoneIcon, HelpIcon, SuggestionIcon, GridIcon, HomeIcon
@@ -45,6 +46,11 @@ const App: React.FC = () => {
   undoRef.current = undo;
   redoRef.current = redo;
   setBoardsRef.current = setBoards;
+
+  const [infoModeOn, setInfoModeOn] = useState(() => localStorage.getItem('anticloud_infoMode') === 'true');
+  useEffect(() => {
+    localStorage.setItem('anticloud_infoMode', String(infoModeOn));
+  }, [infoModeOn]);
 
   const {
     isInitializing, titleImages, setTitleImages, textboxImages, setTextboxImages,
@@ -563,6 +569,8 @@ const App: React.FC = () => {
         handleStartTutorial={handleStartTutorial}
         handleExportToDisk={handleExportToDisk}
         disketteInputRef={disketteInputRef}
+        infoModeOn={infoModeOn}
+        setInfoModeOn={setInfoModeOn}
       />
 
 
@@ -861,6 +869,8 @@ const App: React.FC = () => {
           activeFragmentIndex={editingItem.editingFragmentIndex}
         />
       )}
+
+      <InfoTooltip active={infoModeOn} />
 
       {isTutorialActive && (
         <TutorialGuide

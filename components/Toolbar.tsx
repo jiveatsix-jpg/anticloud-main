@@ -49,6 +49,8 @@ interface ToolbarProps {
   handleStartTutorial: () => void;
   handleExportToDisk: () => void;
   disketteInputRef: React.RefObject<HTMLInputElement>;
+  infoModeOn: boolean;
+  setInfoModeOn: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -88,7 +90,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   setIsMobileMode,
   handleStartTutorial,
   handleExportToDisk,
-  disketteInputRef
+  disketteInputRef,
+  infoModeOn,
+  setInfoModeOn
 }) => {
   const toggleCategory = (category: string) => {
     setActiveCategory(activeCategory === category ? null : category);
@@ -299,6 +303,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
           {activeCategory === 'help' && (
             <div className="absolute top-full right-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 bg-slate-900 shadow-2xl">
               <MenuItem icon={<HelpIcon />} label="Ver Tutorial" onClick={handleStartTutorial} color="bg-slate-700" />
+              <MenuItem
+                icon={<SuggestionIcon />}
+                label={infoModeOn ? 'Modo Info: activado' : 'Modo Info: desactivado'}
+                onClick={() => setInfoModeOn(v => !v)}
+                color={infoModeOn ? 'bg-amber-500' : 'bg-slate-700'}
+              />
               <MenuItem icon={<SuggestionIcon />} label="Sugerencias / Notas" onClick={() => setActiveModal('suggestions')} color="bg-amber-600" />
             </div>
           )}
