@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import Modal from './Modal';
 import { TitleImageCollections, TitleCollectionKey } from '../types';
+import { BOX_PALETTE_CONFIG } from './TextEditModal';
 
 interface AddChordModalProps {
   collections: TitleImageCollections;
-  onAdd: (chordName: string, imageUrl: string, color: string, shadowColor: string) => void;
+  onAdd: (chordName: string, imageUrl: string, color: string, shadowColor: string, boxFilter: string) => void;
   onClose: () => void;
 }
 
@@ -23,6 +24,7 @@ const AddChordModal: React.FC<AddChordModalProps> = ({ collections, onAdd, onClo
   const [selectedSize, setSelectedSize] = useState<TitleCollectionKey>('x1');
   const [selectedColor, setSelectedColor] = useState<string>('#000000');
   const [selectedShadowColor, setSelectedShadowColor] = useState<string>('#FFFFFF');
+  const [selectedBoxFilter, setSelectedBoxFilter] = useState<string>('none');
   const [searchQuery, setSearchQuery] = useState('');
   const [hoveredChord, setHoveredChord] = useState<string | null>(null);
 
@@ -55,7 +57,7 @@ const AddChordModal: React.FC<AddChordModalProps> = ({ collections, onAdd, onClo
   const handleAdd = (chord: string) => {
     const availableImages = collections[selectedSize].filter((img): img is string => !!img);
     if (availableImages.length > 0) {
-      onAdd(chord, availableImages[0], selectedColor, selectedShadowColor);
+      onAdd(chord, availableImages[0], selectedColor, selectedShadowColor, selectedBoxFilter);
     }
   };
 
@@ -74,7 +76,7 @@ const AddChordModal: React.FC<AddChordModalProps> = ({ collections, onAdd, onClo
             <div className="flex flex-col gap-3">
               <label className="text-sm uppercase font-bold tracking-wider opacity-70">Vista Previa</label>
               <div className="relative w-full h-32 pixel-content-box flex items-center justify-center bg-[#203c56] overflow-hidden">
-                <img src={previewImage} alt="" className="w-full h-full object-contain opacity-50" referrerPolicy="no-referrer" />
+                <img src={previewImage} alt="" className="w-full h-full object-contain opacity-50" referrerPolicy="no-referrer" style={{ filter: selectedBoxFilter }} />
                 <div className="absolute inset-0 flex items-center justify-center p-2">
                   <span 
                     className="text-3xl font-bold text-center break-all"
@@ -101,6 +103,21 @@ const AddChordModal: React.FC<AddChordModalProps> = ({ collections, onAdd, onClo
                   >
                     {size}
                   </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-sm uppercase font-bold tracking-wider opacity-70">Color de la Caja</label>
+              <div className="flex flex-wrap gap-1.5 justify-center py-2 bg-black/20 rounded max-h-32 overflow-y-auto">
+                {BOX_PALETTE_CONFIG.map((opt, idx) => (
+                  <button
+                    key={`box-color-${opt.hex}-${idx}`}
+                    onClick={() => setSelectedBoxFilter(opt.filter)}
+                    className={`w-8 h-8 pixel-panel border-2 transition-all ${selectedBoxFilter === opt.filter ? 'border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'border-white/10 opacity-70 hover:opacity-100 hover:scale-105'}`}
+                    style={{ backgroundColor: opt.hex }}
+                    title={opt.hex}
+                  />
                 ))}
               </div>
             </div>

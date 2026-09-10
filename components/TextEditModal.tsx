@@ -34,7 +34,7 @@ const BASIC_COLORS = [
 ];
 
 // Precise mapping of PICO-8 colors to CSS filters starting from the Blue/Cyan box sprite (#32A1D7)
-const BOX_PALETTE_CONFIG = [
+export const BOX_PALETTE_CONFIG = [
   { hex: '#FFFFFF', filter: 'brightness(0.5) invert(1) grayscale(1) contrast(1.5)' }, // Inverted White (User liked this)
   { hex: '#FFF1E8', filter: 'grayscale(1) brightness(1.8) sepia(0.3) saturate(1)' }, // Natural Cream
   { hex: '#FFCCAA', filter: 'sepia(1) hue-rotate(340deg) saturate(1.5) brightness(1.5)' }, // Warm Creamy Peach

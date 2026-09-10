@@ -727,12 +727,13 @@ const App: React.FC = () => {
         <AddChordModal
           collections={titleImages}
           onClose={() => setActiveModal(null)}
-          onAdd={(chordName, imageUrl, color, shadowColor) => {
+          onAdd={(chordName, imageUrl, color, shadowColor, boxFilter) => {
             handleAddItem(ItemType.Music, imageUrl, {
               text: chordName,
               textColor: color,
               textShadowColor: shadowColor,
-              textShadow: true
+              textShadow: true,
+              boxFilter
             });
             setActiveModal(null);
           }}
