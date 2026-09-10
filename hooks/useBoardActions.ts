@@ -114,7 +114,7 @@ export const useBoardActions = ({
         fileContent: type === ItemType.File ? '' : undefined,
         checked: type === ItemType.Checkbox ? false : undefined,
         textColor: type === ItemType.PlainText ? '#FFFFFF' : '#000000',
-        fontFamily: (type === ItemType.Title || type === ItemType.Textbox || type === ItemType.Counter || type === ItemType.Timer || type === ItemType.PlainText || type === ItemType.Box) ? FONT_FACES[1] : FONT_FACES[0],
+        fontFamily: (type === ItemType.Title || type === ItemType.Textbox || type === ItemType.Counter || type === ItemType.Timer || type === ItemType.PlainText || type === ItemType.Box || type === ItemType.Music) ? FONT_FACES[1] : FONT_FACES[0],
         fontSize: 24,
         textShadow: type !== ItemType.PlainText,
         textShadowColor: '#FFFFFF',

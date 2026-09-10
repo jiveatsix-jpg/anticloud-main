@@ -60,16 +60,15 @@ export const useUIState = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const mobile = await storage.getItem('pixelBoard_mobileMode');
+        const [mobile, inv, themeIdx, tutorialCompleted] = await Promise.all([
+          storage.getItem('pixelBoard_mobileMode'),
+          storage.getItem('pixelBoard_inventory'),
+          storage.getItem('pixelBoard_themeIndex'),
+          storage.getItem('pixelBoard_tutorialCompleted'),
+        ]);
         if (mobile) setIsMobileMode(mobile === 'true');
-
-        const inv = await storage.getItem('pixelBoard_inventory');
         if (inv) setInventory(JSON.parse(inv));
-
-        const themeIdx = await storage.getItem('pixelBoard_themeIndex');
         if (themeIdx) setActiveThemeIndex(parseInt(themeIdx, 10));
-
-        const tutorialCompleted = await storage.getItem('pixelBoard_tutorialCompleted');
         if (!tutorialCompleted) setIsTutorialActive(true);
       } catch (e) {
         console.error(e);

@@ -18,7 +18,10 @@ export const useBoards = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const savedBoards = await storage.getItem('pixelBoard_savedBoards');
+        const [savedBoards, savedIndex] = await Promise.all([
+          storage.getItem('pixelBoard_savedBoards'),
+          storage.getItem('pixelBoard_activeBoardIndex'),
+        ]);
         if (savedBoards) {
           const parsed = JSON.parse(savedBoards);
           if (Array.isArray(parsed)) {
@@ -26,7 +29,6 @@ export const useBoards = () => {
             if (validBoards.length > 0) setBoards(validBoards);
           }
         }
-        const savedIndex = await storage.getItem('pixelBoard_activeBoardIndex');
         if (savedIndex) {
           const index = parseInt(savedIndex, 10);
           if (!isNaN(index)) setActiveBoardIndex(index);
