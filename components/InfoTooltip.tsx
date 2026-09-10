@@ -6,10 +6,29 @@ interface InfoContent {
 }
 
 function readInfo(el: Element): InfoContent | null {
-  const text = el.getAttribute('title') || el.getAttribute('aria-label');
+  const text = el.getAttribute('title') || el.getAttribute('data-info-title-tmp') || el.getAttribute('aria-label');
   if (!text) return null;
   const label = (el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 40);
   return { label, text };
+}
+
+// While info mode is active we render our own styled tooltip from `title` — but the browser
+// renders its own native one from that same attribute, so both show up stacked. Temporarily
+// move the text out of `title` while hovered (and back on mouseout) to keep the native one from firing.
+function suppressNativeTooltip(el: Element) {
+  const title = el.getAttribute('title');
+  if (title !== null) {
+    el.setAttribute('data-info-title-tmp', title);
+    el.removeAttribute('title');
+  }
+}
+
+function restoreNativeTooltip(el: Element) {
+  const tmp = el.getAttribute('data-info-title-tmp');
+  if (tmp !== null) {
+    el.setAttribute('title', tmp);
+    el.removeAttribute('data-info-title-tmp');
+  }
 }
 
 /**
@@ -26,26 +45,32 @@ export default function InfoTooltip({ active }: { active: boolean }) {
 
   useEffect(() => {
     if (!active) {
+      if (currentEl.current) restoreNativeTooltip(currentEl.current);
       setInfo(null);
       currentEl.current = null;
       return;
     }
 
     const onMove = (e: MouseEvent) => {
-      const target = (e.target as Element)?.closest('[title], [aria-label]');
+      const target = (e.target as Element)?.closest('[title], [aria-label], [data-info-title-tmp]');
       if (!target) {
-        if (currentEl.current) { currentEl.current = null; setInfo(null); }
+        if (currentEl.current) { restoreNativeTooltip(currentEl.current); currentEl.current = null; setInfo(null); }
         return;
       }
       if (target !== currentEl.current) {
+        if (currentEl.current) restoreNativeTooltip(currentEl.current);
         currentEl.current = target;
         setInfo(readInfo(target));
+        suppressNativeTooltip(target);
       }
       setPos({ x: e.clientX, y: e.clientY });
     };
 
     document.addEventListener('mousemove', onMove);
-    return () => document.removeEventListener('mousemove', onMove);
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      if (currentEl.current) restoreNativeTooltip(currentEl.current);
+    };
   }, [active]);
 
   if (!active || !info) return null;
