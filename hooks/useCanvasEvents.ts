@@ -85,7 +85,13 @@ export const useCanvasEvents = ({
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === 'Alt') {
         isAltDownRef.current = false;
-        if (viewportRef.current && !isPanning.current) viewportRef.current.style.cursor = 'grab';
+        // Releasing Alt should restore whatever cursor the CURRENT mode calls for,
+        // not hardcode 'grab' — otherwise releasing Alt while Modo Selección is on
+        // leaves the cursor stuck looking like grab-mode even though the mode itself
+        // never changed.
+        if (viewportRef.current && !isPanning.current) {
+          viewportRef.current.style.cursor = isMultiSelectMode ? 'crosshair' : 'grab';
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -94,7 +100,16 @@ export const useCanvasEvents = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [viewportRef]);
+  }, [viewportRef, isMultiSelectMode]);
+
+  // Whenever Modo Selección is toggled, clear any inline cursor style left over
+  // from panning/Alt so the mode's own Tailwind class (cursor-crosshair/cursor-grab)
+  // — which has lower specificity than an inline style — is free to take effect again.
+  useEffect(() => {
+    if (viewportRef.current && !isPanning.current) {
+      viewportRef.current.style.cursor = '';
+    }
+  }, [isMultiSelectMode, viewportRef]);
 
   const handleWheel = useCallback((e: WheelEvent) => {
     const viewport = viewportRef.current;
@@ -177,10 +192,10 @@ export const useCanvasEvents = ({
 
   const handlePanMouseUp = useCallback(() => {
     isPanning.current = false;
-    if (viewportRef.current) viewportRef.current.style.cursor = 'grab';
+    if (viewportRef.current) viewportRef.current.style.cursor = isMultiSelectMode ? 'crosshair' : 'grab';
     document.removeEventListener('mousemove', handlePanMouseMove);
     document.removeEventListener('mouseup', handlePanMouseUp);
-  }, [viewportRef, handlePanMouseMove]);
+  }, [viewportRef, handlePanMouseMove, isMultiSelectMode]);
 
   const handleMultiSelectMouseMove = useCallback((e: MouseEvent) => {
     if (!selectionStartPoint.current || !boardRef.current) return;
@@ -281,10 +296,10 @@ export const useCanvasEvents = ({
 
   const handlePanTouchEnd = useCallback(() => {
     isPanning.current = false;
-    if (viewportRef.current) viewportRef.current.style.cursor = 'grab';
+    if (viewportRef.current) viewportRef.current.style.cursor = isMultiSelectMode ? 'crosshair' : 'grab';
     document.removeEventListener('touchmove', handlePanTouchMove);
     document.removeEventListener('touchend', handlePanTouchEnd);
-  }, [viewportRef, handlePanTouchMove]);
+  }, [viewportRef, handlePanTouchMove, isMultiSelectMode]);
 
   const handlePanTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('.group') || (e.target as HTMLElement).closest('button') || e.touches.length !== 1) return;

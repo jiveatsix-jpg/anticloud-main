@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Board } from '../types';
 import Modal from './Modal';
+import { BOARD_TEXTURES } from '../constants';
 
 interface BoardSettingsModalProps {
   board: Board;
@@ -13,6 +14,8 @@ const BoardSettingsModal: React.FC<BoardSettingsModalProps> = ({ board, onClose,
   const [height, setHeight] = useState(board.height || 2000);
   const [backgroundUrl, setBackgroundUrl] = useState(board.backgroundUrl || '');
   const [backgroundMode, setBackgroundMode] = useState(board.backgroundMode || 'expand');
+  const [backgroundColor, setBackgroundColor] = useState(board.backgroundColor || '#000000');
+  const [backgroundTexture, setBackgroundTexture] = useState(board.backgroundTexture || 'none');
   const [screenFilter, setScreenFilter] = useState(board.screenFilter || 'none');
   const [particles, setParticles] = useState(board.particles || 'none');
 
@@ -59,6 +62,8 @@ const BoardSettingsModal: React.FC<BoardSettingsModalProps> = ({ board, onClose,
       height: Number(height),
       backgroundUrl,
       backgroundMode: backgroundMode as any,
+      backgroundColor,
+      backgroundTexture,
       screenFilter: screenFilter as any,
       particles: particles as any,
     });
@@ -132,6 +137,38 @@ const BoardSettingsModal: React.FC<BoardSettingsModalProps> = ({ board, onClose,
                 <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
               </label>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm text-white/70">Color de Fondo</label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  className="pixel-input h-10 w-14 p-1 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  className="pixel-input flex-1"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm text-white/70">Textura</label>
+              <select
+                value={backgroundTexture}
+                onChange={(e) => setBackgroundTexture(e.target.value)}
+                className="pixel-input w-full"
+              >
+                {BOARD_TEXTURES.map(t => (
+                  <option key={t.id} value={t.id}>{t.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 

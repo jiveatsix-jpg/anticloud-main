@@ -1,6 +1,38 @@
 import { Board, BoardItem } from '../types';
 import { FONT_FACES } from '../constants';
 
+interface ConnectableRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Where a connection line should touch `from`'s box: the midpoint of whichever
+ * side (top/bottom/left/right) faces `to`, instead of `from`'s raw center —
+ * so a link coming from roughly the side sits flush on that side instead of
+ * cutting across the box diagonally.
+ */
+export const getEdgeConnectionPoint = (from: ConnectableRect, to: ConnectableRect): { x: number; y: number } => {
+  const fromCenterX = from.x + from.width / 2;
+  const fromCenterY = from.y + from.height / 2;
+  const toCenterX = to.x + to.width / 2;
+  const toCenterY = to.y + to.height / 2;
+  const dx = toCenterX - fromCenterX;
+  const dy = toCenterY - fromCenterY;
+  if (dx === 0 && dy === 0) return { x: fromCenterX, y: fromCenterY };
+
+  const halfWidth = from.width / 2;
+  const halfHeight = from.height / 2;
+  // Compare the direction against the box's own aspect ratio (not a raw 45°
+  // split) so a wide box favors exiting left/right over top/bottom, and vice versa.
+  if (Math.abs(dx) * halfHeight > Math.abs(dy) * halfWidth) {
+    return { x: fromCenterX + (dx > 0 ? halfWidth : -halfWidth), y: fromCenterY };
+  }
+  return { x: fromCenterX, y: fromCenterY + (dy > 0 ? halfHeight : -halfHeight) };
+};
+
 export const wrapText = (context: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
   const words = text.split(' ');
   if (words.length === 0) return [];

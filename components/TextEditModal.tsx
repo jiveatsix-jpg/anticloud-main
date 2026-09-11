@@ -71,6 +71,10 @@ export const BOX_PALETTE_CONFIG = [
   { hex: '#333c57', filter: 'hue-rotate(22deg) saturate(0.65) brightness(0.47)' },
   // Added on request: the palette had no proper saturated red (FF004D reads as pink/crimson).
   { hex: '#FF0000', filter: 'hue-rotate(157deg) saturate(2.5) brightness(0.85)' },
+  // Added on request: a few more intense colors — the palette had no vivid purple, and
+  // the existing greens/cyans (#00E436, #73eff7) were both closer to lime/sky than these.
+  { hex: '#9D00FF', filter: 'hue-rotate(55deg) saturate(2.5) brightness(0.95)' },
+  { hex: '#00FF9D', filter: 'hue-rotate(320deg) saturate(2.5) brightness(0.95)' },
 ];
 
 const TextEditModal: React.FC<TextEditModalProps> = ({

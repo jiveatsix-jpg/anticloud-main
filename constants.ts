@@ -152,3 +152,35 @@ export const THEMES: Theme[] = [
     },
   },
 ];
+
+// Texturas de fondo de pizarra: patrones CSS generados (sin archivos de imagen),
+// pensados como overlay liviano sobre el color/imagen de fondo, no como reemplazo.
+export const BOARD_TEXTURES: { id: string; label: string; backgroundImage: string; backgroundSize: string }[] = [
+  { id: 'none', label: 'Ninguna', backgroundImage: 'none', backgroundSize: 'auto' },
+  {
+    id: 'dots',
+    label: 'Puntos',
+    backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.18) 1.5px, transparent 1.5px)',
+    backgroundSize: '14px 14px',
+  },
+  {
+    id: 'grid',
+    label: 'Cuadrícula',
+    backgroundImage:
+      'repeating-linear-gradient(0deg, rgba(255,255,255,0.1) 0 1px, transparent 1px 22px), ' +
+      'repeating-linear-gradient(90deg, rgba(255,255,255,0.1) 0 1px, transparent 1px 22px)',
+    backgroundSize: '22px 22px',
+  },
+  {
+    id: 'diagonal',
+    label: 'Diagonal',
+    backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.12) 0 6px, transparent 6px 18px)',
+    backgroundSize: 'auto',
+  },
+  {
+    id: 'scanlines',
+    label: 'Líneas',
+    backgroundImage: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.1) 0 1px, transparent 1px 5px)',
+    backgroundSize: 'auto',
+  },
+];

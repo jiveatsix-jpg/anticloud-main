@@ -2,7 +2,8 @@ import React, { useLayoutEffect, useRef } from 'react';
 import DraggableItem from './DraggableItem';
 import ParticleSystem from './ParticleSystem';
 import { Board, BoardItem, ItemType } from '../types';
-import { GRID_SIZE } from '../constants';
+import { GRID_SIZE, BOARD_TEXTURES } from '../constants';
+import { getEdgeConnectionPoint } from '../utils/canvasUtils';
 
 interface BoardCanvasProps {
   viewportRef: React.RefObject<HTMLDivElement>;
@@ -97,6 +98,28 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
     lastOffsets.current = { x: canvasOffsetX, y: canvasOffsetY };
   }, [canvasOffsetX, canvasOffsetY, zoom, viewportRef]);
 
+  // La imagen de fondo y la textura son capas CSS independientes — se combinan
+  // en un solo background con varias capas en vez de que una pise a la otra.
+  const texture = BOARD_TEXTURES.find(t => t.id === activeBoard.backgroundTexture) || BOARD_TEXTURES[0];
+  const hasTexture = texture.id !== 'none';
+  const hasImage = !!activeBoard.backgroundUrl;
+  const backgroundImage = [
+    hasImage ? `url(${activeBoard.backgroundUrl})` : null,
+    hasTexture ? texture.backgroundImage : null,
+  ].filter(Boolean).join(', ') || 'none';
+  const backgroundSize = [
+    hasImage ? (activeBoard.backgroundMode === 'expand' ? '100% 100%' : 'auto') : null,
+    hasTexture ? texture.backgroundSize : null,
+  ].filter(Boolean).join(', ');
+  const backgroundRepeat = [
+    hasImage ? (activeBoard.backgroundMode === 'tile' ? 'repeat' : 'no-repeat') : null,
+    hasTexture ? 'repeat' : null,
+  ].filter(Boolean).join(', ');
+  const backgroundPosition = [
+    hasImage ? (activeBoard.backgroundMode === 'center' ? 'center' : 'top left') : null,
+    hasTexture ? '0 0' : null,
+  ].filter(Boolean).join(', ');
+
   return (
     <div
       ref={viewportRef}
@@ -145,10 +168,11 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
             left: 0,
             width: `${canvasWidth}px`,
             height: `${canvasHeight}px`,
-            backgroundImage: activeBoard.backgroundUrl ? `url(${activeBoard.backgroundUrl})` : 'none',
-            backgroundRepeat: activeBoard.backgroundMode === 'tile' ? 'repeat' : 'no-repeat',
-            backgroundSize: activeBoard.backgroundMode === 'expand' ? '100% 100%' : 'auto',
-            backgroundPosition: activeBoard.backgroundMode === 'center' ? 'center' : 'top left',
+            backgroundColor: activeBoard.backgroundColor || '#000000',
+            backgroundImage,
+            backgroundRepeat,
+            backgroundSize,
+            backgroundPosition,
             transform: `scale(${zoom})`,
             transformOrigin: 'top left',
           }}
@@ -204,10 +228,12 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
                 const toItem = activeBoard.items.find(i => i.id === conn.toId);
                 if (!fromItem || !toItem) return null;
 
-                const fromX = fromItem.x + fromItem.width / 2;
-                const fromY = fromItem.y + fromItem.height / 2;
-                const toX = toItem.x + toItem.width / 2;
-                const toY = toItem.y + toItem.height / 2;
+                const fromPoint = getEdgeConnectionPoint(fromItem, toItem);
+                const toPoint = getEdgeConnectionPoint(toItem, fromItem);
+                const fromX = fromPoint.x;
+                const fromY = fromPoint.y;
+                const toX = toPoint.x;
+                const toY = toPoint.y;
 
                 return (
                   <g key={conn.id} className="pointer-events-auto cursor-pointer" onClick={(e) => { e.stopPropagation(); handleRemoveConnection(conn.id); }}>
@@ -228,8 +254,9 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
               {connectingFromId && connectionPointerCoord && (() => {
                 const fromItem = activeBoard.items.find(i => i.id === connectingFromId);
                 if (!fromItem) return null;
-                const fromX = fromItem.x + fromItem.width / 2;
-                const fromY = fromItem.y + fromItem.height / 2;
+                const fromPoint = getEdgeConnectionPoint(fromItem, { x: connectionPointerCoord.x, y: connectionPointerCoord.y, width: 0, height: 0 });
+                const fromX = fromPoint.x;
+                const fromY = fromPoint.y;
                 return (
                   <line
                     x1={fromX} y1={fromY}

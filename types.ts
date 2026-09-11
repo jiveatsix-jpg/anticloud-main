@@ -85,6 +85,8 @@ export interface Board {
   width?: number;
   height?: number;
   backgroundMode?: 'tile' | 'expand' | 'center';
+  backgroundColor?: string;
+  backgroundTexture?: string;
   screenFilter?: 'none' | 'crt' | 'sepia' | 'grayscale' | 'gameboy' | 'glitch';
   particles?: 'none' | 'rain' | 'confetti';
 }
