@@ -58,7 +58,7 @@ export const useBoards = () => {
     }
   }, [boards.length, activeBoardIndex]);
 
-  const handleUpdateItem = useCallback((updatedItem: BoardItem, selectedItemIds: string[]) => {
+  const handleUpdateItem = useCallback((updatedItem: BoardItem, selectedItemIds: string[], snapToGrid?: boolean, gridSize?: number) => {
     pushHistory(boards);
     setBoards(prev => prev.map((board, index) => {
       if (index !== activeBoardIndex) return board;
@@ -72,7 +72,16 @@ export const useBoards = () => {
           items: board.items.map(item => {
             if (selectedItemIds.includes(item.id)) {
               if (item.id === updatedItem.id) return updatedItem;
-              return { ...item, x: item.x + dx, y: item.y + dy };
+              // Snap each secondary item to the universal grid independently instead of just
+              // carrying over the primary item's raw delta, so a group move doesn't leave the
+              // others off-grid.
+              let newX = item.x + dx;
+              let newY = item.y + dy;
+              if (snapToGrid && gridSize) {
+                newX = Math.round(newX / gridSize) * gridSize;
+                newY = Math.round(newY / gridSize) * gridSize;
+              }
+              return { ...item, x: newX, y: newY };
             }
             return item;
           })

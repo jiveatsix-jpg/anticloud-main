@@ -69,6 +69,8 @@ export const BOX_PALETTE_CONFIG = [
   { hex: '#94b0c2', filter: 'saturate(0.65) brightness(1.15)' },
   { hex: '#566c86', filter: 'hue-rotate(10deg) saturate(0.55) brightness(0.75)' },
   { hex: '#333c57', filter: 'hue-rotate(22deg) saturate(0.65) brightness(0.47)' },
+  // Added on request: the palette had no proper saturated red (FF004D reads as pink/crimson).
+  { hex: '#FF0000', filter: 'hue-rotate(157deg) saturate(2.5) brightness(0.85)' },
 ];
 
 const TextEditModal: React.FC<TextEditModalProps> = ({

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { BoardItem, ItemType } from '../types';
 import { DeleteIcon, EditIcon, DuplicateIcon, SendToBackIcon, DpadUpIcon, DpadDownIcon, DpadLeftIcon, DpadRightIcon, PlayIcon, PauseIcon, ResetIcon, CopyIcon, PasteIcon, DownloadIcon, FileIcon, LinkIcon, CheckboxIcon, PaletteIcon } from './Icons';
 
@@ -344,14 +344,20 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
           if (el) {
             const originalX = parseFloat(el.getAttribute('data-original-x') || el.style.left || '0');
             const originalY = parseFloat(el.getAttribute('data-original-y') || el.style.top || '0');
-            el.style.left = `${originalX + dx}px`;
-            el.style.top = `${originalY + dy}px`;
+            let secondaryX = originalX + dx;
+            let secondaryY = originalY + dy;
+            if (snapToGrid) {
+              secondaryX = Math.round(secondaryX / gridSize) * gridSize;
+              secondaryY = Math.round(secondaryY / gridSize) * gridSize;
+            }
+            el.style.left = `${secondaryX}px`;
+            el.style.top = `${secondaryY}px`;
 
             // Update any DOM lines connected to these multi-selected items
             const elWidth = parseFloat(el.style.width || '200');
             const elHeight = parseFloat(el.style.height || '100');
-            const elCenterX = originalX + dx + elWidth / 2;
-            const elCenterY = originalY + dy + elHeight / 2;
+            const elCenterX = secondaryX + elWidth / 2;
+            const elCenterY = secondaryY + elHeight / 2;
 
             document.querySelectorAll(`line[data-from="${id}"]`).forEach(line => {
               line.setAttribute('x1', elCenterX.toString());
@@ -598,6 +604,48 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
       })()
     : {};
 
+  // Phase-lock every timed effect to the wall clock (not this item's own mount time), so elements
+  // with the same effect stay in sync regardless of when each was created. Each period below must
+  // match the corresponding `animation` duration in index.html's `<style>` block.
+  const EFFECT_PERIODS_MS = {
+    floating: 3000,
+    glitch: 4000,
+    rainbow: 5000,
+    shake: 600,
+    typewriter: 4000,
+    caret: 800,
+    breathing: 3500,
+    pulse: 1500,
+    terminalScan: 16000,
+    staticNoise: 5000,
+  } as const;
+  const effectDelays = useMemo(() => {
+    const now = Date.now();
+    return Object.fromEntries(
+      Object.entries(EFFECT_PERIODS_MS).map(([key, period]) => [key, `${-(now % period) / 1000}s`])
+    ) as Record<keyof typeof EFFECT_PERIODS_MS, string>;
+  }, [item.id]);
+
+  // Only one `animation` (name/duration/delay) can win on the element itself when several of these
+  // classes are applied at once, in the same last-rule-wins order as the CSS in index.html — pick
+  // the matching delay for whichever effect actually ends up rendering.
+  const hostAnimationDelay =
+    item.pulse ? effectDelays.pulse :
+    item.breathing ? effectDelays.breathing :
+    item.typewriter ? effectDelays.typewriter :
+    item.shake ? effectDelays.shake :
+    item.rainbow ? effectDelays.rainbow :
+    item.glitch ? effectDelays.glitch :
+    item.floating ? effectDelays.floating :
+    undefined;
+
+  // These effects animate a ::before/::after pseudo-element instead of the item itself, so they don't
+  // compete for the host's single animation-delay slot — pass each one through its own CSS variable.
+  const pseudoEffectDelayVars: Record<string, string> = {};
+  if (item.terminalScan) pseudoEffectDelayVars['--terminal-scan-delay'] = effectDelays.terminalScan;
+  if (item.staticNoise) pseudoEffectDelayVars['--static-delay'] = effectDelays.staticNoise;
+  if (item.typewriter) pseudoEffectDelayVars['--caret-delay'] = effectDelays.caret;
+
   const effectClasses = [
     item.neonGlow ? 'neon-text' : '',
     item.floating ? 'effect-floating' : '',
@@ -626,6 +674,8 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
         transform: isDragging ? 'scale(1.05)' : 'scale(1)',
         outline: isHovered && !isSelected ? '4px solid rgba(255, 255, 255, 0.5)' : 'none',
         outlineOffset: '-4px',
+        ...(hostAnimationDelay ? { animationDelay: hostAnimationDelay } : {}),
+        ...pseudoEffectDelayVars,
         ...neonGlowStyle
       }}
       onMouseDown={handleMouseDown}

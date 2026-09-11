@@ -247,7 +247,7 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
             <DraggableItem
               key={item.id}
               item={item}
-              onUpdate={(updated) => handleUpdateItem(updated, selectedItemIds)}
+              onUpdate={(updated) => handleUpdateItem(updated, selectedItemIds, isGridVisible, GRID_SIZE)}
               onDelete={(id) => handleDeleteItem(id, setSelectedItemIds, setSelectedItemId)}
               onDuplicate={handleDuplicateItem}
               onEdit={handleStartEditItem}
