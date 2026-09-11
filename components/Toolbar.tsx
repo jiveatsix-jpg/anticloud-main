@@ -122,7 +122,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           onClick={() => setActiveCategory(null)}
         />
       )}
-      <div className="fixed top-0 left-0 right-0 h-12 bg-black/40 backdrop-blur-md border-b-4 border-slate-800 flex items-center px-4 gap-2 z-[1000]">
+      <div className="fixed top-0 left-0 right-0 h-12 bg-black/40 backdrop-blur-md border-b-4 border-slate-800 flex items-center px-4 gap-2 z-[var(--z-toolbar)]">
         {/* Pizarra */}
         <div className="relative h-full flex items-center">
           <button
@@ -136,7 +136,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <ChevronDownIcon />
           </button>
           {activeCategory === 'boards' && (
-            <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 bg-slate-900 shadow-2xl">
+            <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 z-[var(--z-toolbar-dropdown)]">
               <div className="flex items-center justify-between p-2 border-b-2 border-slate-800 mb-1">
                 <button
                   onClick={() => setActiveBoardIndex(prev => Math.max(0, prev - 1))}
@@ -180,7 +180,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <ChevronDownIcon />
           </button>
           {activeCategory === 'add' && (
-            <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[220px] flex flex-col p-1 bg-slate-900 shadow-2xl max-h-[70vh] overflow-y-auto">
+            <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[220px] flex flex-col p-1 z-[var(--z-toolbar-dropdown)] max-h-[70vh] overflow-y-auto">
               <MenuItem icon={<TextboxIcon />} label="Caja" onClick={handleAddBox} color="bg-violet-600" title="Agrega una caja de texto editable en blanco." />
               <MenuItem icon={<FrameIcon />} label="Marco" onClick={handleAddFrame} color="bg-orange-700" title="Agrega un marco decorativo para encuadrar otros elementos." />
               <div className="h-0.5 bg-slate-800 my-1" />
@@ -209,7 +209,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <ChevronDownIcon />
           </button>
           {activeCategory === 'music' && (
-            <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 bg-slate-900 shadow-2xl">
+            <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 z-[var(--z-toolbar-dropdown)]">
               <MenuItem icon={<MusicIcon />} label="Añadir Acorde" onClick={() => setActiveModal('addChord')} color="bg-indigo-600" title="Abre el selector para agregar un acorde musical al pizarrón." />
               <MenuItem icon={<LayersIcon />} label="Armonización" onClick={() => setActiveModal('addHarmonization')} color="bg-blue-600" title="Abre el asistente para agregar una progresión de acordes completa." />
             </div>
@@ -229,7 +229,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <ChevronDownIcon />
           </button>
           {activeCategory === 'edit' && (
-            <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 bg-slate-900 shadow-2xl">
+            <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 z-[var(--z-toolbar-dropdown)]">
               <MenuItem
                 icon={<SelectIcon />}
                 label={isMultiSelectMode ? "Desactivar Selección" : "Modo Selección"}
@@ -265,7 +265,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <ChevronDownIcon />
           </button>
           {activeCategory === 'view' && (
-            <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 bg-slate-900 shadow-2xl">
+            <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 z-[var(--z-toolbar-dropdown)]">
               <MenuItem icon={<SettingsIcon />} label="Cambiar Fondo" onClick={() => backgroundInputRef.current?.click()} color="bg-teal-600" title="Elegí una imagen para usar de fondo del pizarrón." />
               <MenuItem icon={<GridIcon />} label={isGridVisible ? "Ocultar Cuadrícula" : "Mostrar Cuadrícula"} onClick={() => setIsGridVisible(!isGridVisible)} color={isGridVisible ? "bg-slate-500" : "bg-slate-700"} title="Muestra u oculta la cuadrícula de referencia para alinear elementos." />
               <MenuItem icon={<PaletteIcon />} label="Cambiar Tema" onClick={handleThemeChange} color="bg-pink-600" title="Cambia la paleta de colores visual de la aplicación." />
@@ -287,7 +287,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <ChevronDownIcon />
           </button>
           {activeCategory === 'export' && (
-            <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 bg-slate-900 shadow-2xl">
+            <div className="absolute top-full left-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 z-[var(--z-toolbar-dropdown)]">
               <MenuItem icon={<FullscreenIcon />} label="Captura Completa" onClick={() => handleScreenshot()} color="bg-orange-600" title="Descarga una imagen PNG de todo el pizarrón." />
               <MenuItem icon={<CropIcon />} label="Seleccionar Área" onClick={() => setIsSelectingArea(true)} color="bg-amber-600" title="Elegí un área específica del pizarrón para exportar como imagen." />
               <div className="h-0.5 bg-slate-800 my-1" />
@@ -312,7 +312,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <ChevronDownIcon />
           </button>
           {activeCategory === 'help' && (
-            <div className="absolute top-full right-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 bg-slate-900 shadow-2xl">
+            <div className="absolute top-full right-0 mt-1 pixel-panel min-w-[200px] flex flex-col p-1 z-[var(--z-toolbar-dropdown)]">
               <MenuItem icon={<HelpIcon />} label="Ver Tutorial" onClick={handleStartTutorial} color="bg-slate-700" title="Vuelve a mostrar el tutorial guiado paso a paso de la aplicación." />
               <MenuItem
                 icon={<SuggestionIcon />}

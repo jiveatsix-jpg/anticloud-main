@@ -1,6 +1,7 @@
 import React from 'react';
 import { BoardItem } from '../types';
-import { XIcon, TrashIcon, PlusIcon } from './Icons';
+import { TrashIcon, PlusIcon } from './Icons';
+import Modal from './Modal';
 
 interface InventoryModalProps {
   inventory: BoardItem[];
@@ -16,18 +17,17 @@ const InventoryModal: React.FC<InventoryModalProps> = ({
   onRemoveItem 
 }) => {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="pixel-panel w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <h2 className="text-xl text-white font-mono uppercase tracking-wider flex items-center gap-2">
-            Inventario Local
-          </h2>
-          <button onClick={onClose} className="pixel-button p-1 bg-red-600">
-            <XIcon />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4">
+    <Modal
+      onClose={onClose}
+      title="Inventario Local"
+      className="max-w-2xl"
+      footer={
+        <p className="text-[10px] text-white/50 font-mono text-center">
+          Los elementos se guardan localmente en tu navegador.
+        </p>
+      }
+    >
+        <div className="flex-1 overflow-y-auto">
           {inventory.length === 0 ? (
             <div className="text-center py-12 text-white/50 font-mono italic">
               El inventario está vacío. Guarda elementos desde la pizarra.
@@ -35,11 +35,11 @@ const InventoryModal: React.FC<InventoryModalProps> = ({
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {inventory.map((item) => (
-                <div 
-                  key={item.id} 
-                  className="pixel-panel p-2 bg-slate-800/50 hover:bg-slate-700/50 transition-colors group relative"
+                <div
+                  key={item.id}
+                  className="pixel-content-box hover:bg-white/5 transition-colors group relative"
                 >
-                  <div className="aspect-square flex items-center justify-center bg-slate-900/50 rounded p-2 mb-2">
+                  <div className="aspect-square flex items-center justify-center bg-black/40 rounded p-2 mb-2">
                     {item.imageUrl ? (
                       <img 
                         src={item.imageUrl} 
@@ -75,12 +75,7 @@ const InventoryModal: React.FC<InventoryModalProps> = ({
             </div>
           )}
         </div>
-
-        <div className="p-4 border-t border-white/10 bg-slate-900/30 text-[10px] text-white/50 font-mono text-center">
-          Los elementos se guardan localmente en tu navegador.
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

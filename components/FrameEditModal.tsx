@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BoardItem } from '../types';
 import { FRAME_STYLES } from '../constants';
+import Modal from './Modal';
 
 interface FrameEditModalProps {
   item: BoardItem;
@@ -12,18 +13,7 @@ const FrameEditModal: React.FC<FrameEditModalProps> = ({ item, onClose, onSave }
   const [currentUrl, setCurrentUrl] = useState(item.imageUrl);
 
   return (
-    <div
-      className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="pixel-panel w-full max-w-md flex flex-col gap-5 bg-slate-900 p-5 max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-between items-center border-b border-white/10 pb-3">
-          <h2 className="text-2xl font-bold text-white neon-text uppercase tracking-tighter">Estilo del Marco</h2>
-          <button onClick={onClose} className="text-white/50 hover:text-white text-2xl">&times;</button>
-        </div>
+    <Modal onClose={onClose} title="Estilo del Marco" className="max-w-md">
         <div className="grid grid-cols-5 gap-3 overflow-y-auto">
           {FRAME_STYLES.map(style => (
             <button
@@ -45,8 +35,7 @@ const FrameEditModal: React.FC<FrameEditModalProps> = ({ item, onClose, onSave }
             </button>
           ))}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

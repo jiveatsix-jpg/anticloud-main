@@ -87,7 +87,7 @@ export default function InfoTooltip({ active }: { active: boolean }) {
   return (
     <div
       ref={boxRef}
-      className="fixed z-[999] max-w-[260px] p-2.5 bg-slate-900 border-2 border-cyan-400 text-white text-xs leading-relaxed pointer-events-none"
+      className="fixed z-[var(--z-info-tooltip)] max-w-[260px] p-2.5 bg-slate-900 border-2 border-cyan-400 text-white text-xs leading-relaxed pointer-events-none"
       style={{
         left: Math.max(4, left), top: Math.max(4, top),
         boxShadow: '4px 4px 0 rgba(0,0,0,.7)',

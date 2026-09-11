@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Board } from '../types';
+import Modal from './Modal';
 
 interface BoardSettingsModalProps {
   board: Board;
@@ -65,13 +66,21 @@ const BoardSettingsModal: React.FC<BoardSettingsModalProps> = ({ board, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="pixel-panel w-full max-w-md flex flex-col gap-6 max-h-[90vh] overflow-auto">
-        <div className="flex justify-between items-center border-b border-white/10 pb-4">
-          <h2 className="text-2xl font-bold text-white neon-text">Ajustes de Pizarra</h2>
-          <button onClick={onClose} className="text-white/50 hover:text-white text-2xl">&times;</button>
+    <Modal
+      onClose={onClose}
+      title="Ajustes de Pizarra"
+      className="max-w-md"
+      footer={
+        <div className="flex gap-3">
+          <button onClick={onClose} className="pixel-button flex-1 p-3 bg-white/10 hover:bg-white/20">
+            Cancelar
+          </button>
+          <button onClick={handleSave} className="pixel-button flex-1 p-3 bg-indigo-600 hover:bg-indigo-500">
+            Guardar Cambios
+          </button>
         </div>
-
+      }
+    >
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
@@ -179,17 +188,7 @@ const BoardSettingsModal: React.FC<BoardSettingsModalProps> = ({ board, onClose,
             </select>
           </div>
         </div>
-
-        <div className="flex gap-3 pt-4 border-t border-white/10">
-          <button onClick={onClose} className="pixel-button flex-1 p-3 bg-white/10 hover:bg-white/20">
-            Cancelar
-          </button>
-          <button onClick={handleSave} className="pixel-button flex-1 p-3 bg-indigo-600 hover:bg-indigo-500">
-            Guardar Cambios
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

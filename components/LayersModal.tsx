@@ -1,6 +1,7 @@
 import React from 'react';
 import { BoardItem, ItemType } from '../types';
 import { DeleteIcon, ArrowUpIcon, ArrowDownIcon } from './Icons';
+import Modal from './Modal';
 
 interface LayersModalProps {
   items: BoardItem[];
@@ -42,13 +43,16 @@ const LayersModal: React.FC<LayersModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="pixel-panel w-full max-w-md flex flex-col gap-6 max-h-[90vh]">
-        <div className="flex justify-between items-center border-b border-white/10 pb-4">
-          <h2 className="text-2xl font-bold text-white neon-text uppercase tracking-tighter">Gestión de Capas</h2>
-          <button onClick={onClose} className="text-white/50 hover:text-white text-2xl">&times;</button>
-        </div>
-
+    <Modal
+      onClose={onClose}
+      title="Gestión de Capas"
+      className="max-w-md"
+      footer={
+        <button onClick={onClose} className="pixel-button w-full p-3 bg-white/10 hover:bg-white/20">
+          Cerrar
+        </button>
+      }
+    >
         <div className="flex-1 overflow-auto pr-2 flex flex-col gap-2">
           {reversedItems.length === 0 ? (
             <p className="text-center text-white/40 py-8 italic">No hay elementos en esta pizarra</p>
@@ -101,14 +105,7 @@ const LayersModal: React.FC<LayersModalProps> = ({
             ))
           )}
         </div>
-
-        <div className="pt-4 border-t border-white/10">
-          <button onClick={onClose} className="pixel-button w-full p-3 bg-white/10 hover:bg-white/20">
-            Cerrar
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 
