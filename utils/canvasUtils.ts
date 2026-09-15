@@ -1,5 +1,51 @@
-import { Board, BoardItem } from '../types';
-import { FONT_FACES } from '../constants';
+import { Board, BoardItem, ItemType } from '../types';
+import { FONT_FACES, DEFAULT_BOX_BORDER_SLICE, DEFAULT_FRAME_BORDER_SLICE } from '../constants';
+
+interface BorderSlice { top: number; right: number; bottom: number; left: number; }
+
+/**
+ * Mirrors DraggableItem.tsx's CSS `border-image: url(...) T R B L [fill] stretch`
+ * rendering (9-slice: corners drawn 1:1, edges stretched along one axis, center
+ * stretched both axes only when `fill` is set) — a plain `drawImage(img, x, y, w, h)`
+ * stretches the WHOLE sprite including the corners, which is what made resized
+ * Box/Frame items come out visibly warped in exported captures despite looking
+ * correct on screen.
+ */
+const drawNineSlice = (
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  slice: BorderSlice,
+  dx: number, dy: number, dw: number, dh: number,
+  fillCenter: boolean
+) => {
+  const sw = img.naturalWidth || img.width;
+  const sh = img.naturalHeight || img.height;
+  const { top: t, right: r, bottom: b, left: l } = slice;
+  const srcCenterW = Math.max(0, sw - l - r);
+  const srcCenterH = Math.max(0, sh - t - b);
+  const dstCenterW = Math.max(0, dw - l - r);
+  const dstCenterH = Math.max(0, dh - t - b);
+
+  const draw = (sx: number, sy: number, sWidth: number, sHeight: number, ddx: number, ddy: number, dWidth: number, dHeight: number) => {
+    if (sWidth <= 0 || sHeight <= 0 || dWidth <= 0 || dHeight <= 0) return;
+    ctx.drawImage(img, sx, sy, sWidth, sHeight, ddx, ddy, dWidth, dHeight);
+  };
+
+  // 4 corners — drawn at native size, never stretched.
+  draw(0, 0, l, t, dx, dy, l, t);
+  draw(sw - r, 0, r, t, dx + dw - r, dy, r, t);
+  draw(0, sh - b, l, b, dx, dy + dh - b, l, b);
+  draw(sw - r, sh - b, r, b, dx + dw - r, dy + dh - b, r, b);
+  // 4 edges — stretched along one axis only.
+  draw(l, 0, srcCenterW, t, dx + l, dy, dstCenterW, t);
+  draw(l, sh - b, srcCenterW, b, dx + l, dy + dh - b, dstCenterW, b);
+  draw(0, t, l, srcCenterH, dx, dy + t, l, dstCenterH);
+  draw(sw - r, t, r, srcCenterH, dx + dw - r, dy + t, r, dstCenterH);
+  // center — only for Box items ("fill"); Frame items leave it transparent.
+  if (fillCenter) {
+    draw(l, t, srcCenterW, srcCenterH, dx + l, dy + t, dstCenterW, dstCenterH);
+  }
+};
 
 interface ConnectableRect {
   x: number;
@@ -55,8 +101,8 @@ export const wrapText = (context: CanvasRenderingContext2D, text: string, maxWid
 };
 
 export const captureBoardToCanvas = async (activeBoard: Board, captureArea?: { x: number; y: number; width: number; height: number; }): Promise<HTMLCanvasElement> => {
-  const boardWidth = captureArea ? captureArea.width : 3000;
-  const boardHeight = captureArea ? captureArea.height : 2000;
+  const boardWidth = captureArea ? captureArea.width : (activeBoard.width || 3000);
+  const boardHeight = captureArea ? captureArea.height : (activeBoard.height || 2000);
 
   const canvas = document.createElement('canvas');
   canvas.width = boardWidth;
@@ -69,6 +115,15 @@ export const captureBoardToCanvas = async (activeBoard: Board, captureArea?: { x
   
   if (captureArea) {
     ctx.translate(-captureArea.x, -captureArea.y);
+  }
+
+  // Solid background color sits below the image, same as the CSS layering
+  // used on the live board (BoardCanvas.tsx) — fill it first either way.
+  ctx.fillStyle = activeBoard.backgroundColor || '#000000';
+  if (captureArea) {
+    ctx.fillRect(captureArea.x, captureArea.y, captureArea.width, captureArea.height);
+  } else {
+    ctx.fillRect(0, 0, boardWidth, boardHeight);
   }
 
   if (activeBoard.backgroundUrl) {
@@ -87,13 +142,6 @@ export const captureBoardToCanvas = async (activeBoard: Board, captureArea?: { x
       } else {
         ctx.fillRect(0, 0, boardWidth, boardHeight);
       }
-    }
-  } else {
-    ctx.fillStyle = '#000000';
-    if (captureArea) {
-      ctx.fillRect(captureArea.x, captureArea.y, captureArea.width, captureArea.height);
-    } else {
-      ctx.fillRect(0, 0, boardWidth, boardHeight);
     }
   }
 
@@ -115,7 +163,13 @@ export const captureBoardToCanvas = async (activeBoard: Board, captureArea?: { x
   for (const { item, img } of loadedItems) {
     if (!img) continue;
 
-    ctx.drawImage(img, item.x, item.y, item.width, item.height);
+    if (item.type === ItemType.Box) {
+      drawNineSlice(ctx, img, item.borderSlice || DEFAULT_BOX_BORDER_SLICE, item.x, item.y, item.width, item.height, true);
+    } else if (item.type === ItemType.Frame) {
+      drawNineSlice(ctx, img, item.borderSlice || DEFAULT_FRAME_BORDER_SLICE, item.x, item.y, item.width, item.height, false);
+    } else {
+      ctx.drawImage(img, item.x, item.y, item.width, item.height);
+    }
 
     if (item.text) {
       const fontSize = item.fontSize || 24;
