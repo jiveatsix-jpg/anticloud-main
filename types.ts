@@ -29,6 +29,7 @@ export interface BoardItem {
   width: number;
   height: number;
   text: string;
+  notes?: string;
   textFragments?: TextFragment[];
   textColor?: string;
   fontFamily?: string;
@@ -63,6 +64,7 @@ export interface BoardItem {
   breathing?: boolean;
   checked?: boolean;
   groupId?: string;
+  collapsed?: boolean;
   borderSlice?: { top: number; right: number; bottom: number; left: number };
   boxFilter?: string;
   secondaryBoxFilter?: string;
@@ -70,11 +72,18 @@ export interface BoardItem {
   editingFragmentIndex?: number;
 }
 
+export type ConnectionSide = 'top' | 'right' | 'bottom' | 'left';
+
 export interface Connection {
   id: string;
   fromId: string;
   toId: string;
   color?: string;
+  // Locked in at creation time so the anchor point stays put as items move;
+  // absent on connections created before this field existed, which keep
+  // re-anchoring dynamically until deleted and recreated.
+  fromSide?: ConnectionSide;
+  toSide?: ConnectionSide;
 }
 
 export interface Board {

@@ -77,6 +77,16 @@ export const BOX_PALETTE_CONFIG = [
   { hex: '#00FF9D', filter: 'hue-rotate(320deg) saturate(2.5) brightness(0.95)' },
 ];
 
+// Derives a single representative accent color for an item, preferring its exact
+// box palette color (matched via boxFilter) over its text/shadow colors.
+export const getItemAccentColor = (item: BoardItem): string => {
+  if (item.boxFilter) {
+    const match = BOX_PALETTE_CONFIG.find(o => o.filter === item.boxFilter);
+    if (match) return match.hex;
+  }
+  return item.textColor || item.textShadowColor || 'var(--pixel-highlight-color, #ffaa00)';
+};
+
 const TextEditModal: React.FC<TextEditModalProps> = ({
   item,
   onSave,

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useMemo, useState } from 'react';
 import { ItemType, TitleCollectionKey, TextboxCollectionKey, AssetCategory, BoardItem } from './types';
 import { FONT_FACES, THEMES } from './constants';
 import AddElementModal from './components/AddElementModal';
@@ -8,6 +8,7 @@ import EditImagesModal from './components/EditImagesModal';
 
 import TextEditModal from './components/TextEditModal';
 import FrameEditModal from './components/FrameEditModal';
+import NotesModal from './components/NotesModal';
 import BoardSettingsModal from './components/BoardSettingsModal';
 import LayersModal from './components/LayersModal';
 import InventoryModal from './components/InventoryModal';
@@ -74,6 +75,7 @@ const App: React.FC = () => {
     isMultiSelectMode, setIsMultiSelectMode, multiSelectRect, setMultiSelectRect,
     clipboard, setClipboard, activeCategory, handleCategoryEnter, handleCategoryLeave,
     activeModal, setActiveModal, editingItem, setEditingItem,
+    notesItem, setNotesItem,
     inventory, setInventory,
     activeThemeIndex, setActiveThemeIndex, isTutorialActive, setIsTutorialActive,
     tutorialStep, setTutorialStep,
@@ -172,6 +174,30 @@ const App: React.FC = () => {
   zoomRef.current = zoom;
   setZoomRef.current = setZoom;
 
+  // Items hidden behind a collapsed connection fold. Computed here (rather than only
+  // inside BoardCanvas, which owns the render-side filtering) because useCanvasEvents
+  // is called from this component and also needs it, for the marquee-select filter;
+  // duplicating this cheap, deterministic computation is simpler than threading a new
+  // prop down through BoardCanvas just to hand it back up.
+  const hiddenItemIds = useMemo(() => {
+    const outgoing = new Map<string, string[]>();
+    (activeBoard.connections || []).forEach(c => {
+      if (!outgoing.has(c.fromId)) outgoing.set(c.fromId, []);
+      outgoing.get(c.fromId)!.push(c.toId);
+    });
+    const hidden = new Set<string>();
+    activeBoard.items.filter(i => i.collapsed).forEach(root => {
+      const stack = [...(outgoing.get(root.id) || [])];
+      while (stack.length) {
+        const id = stack.pop()!;
+        if (hidden.has(id)) continue;
+        hidden.add(id);
+        stack.push(...(outgoing.get(id) || []));
+      }
+    });
+    return hidden;
+  }, [activeBoard.items, activeBoard.connections]);
+
   const {
     handleCenterContent, handlePanMouseDown, handlePanTouchStart, handleSelectionMouseDown,
     handleMoveStart, handleMoveEnd, handlePanMouseMove, handlePanMouseUp,
@@ -181,7 +207,7 @@ const App: React.FC = () => {
     zoom, setZoom, viewportRef, boardRef, isMultiSelectMode, isGridVisible,
     setSelectedItemId, setSelectedItemIds, setMultiSelectRect, setSelectionRect,
     setIsSelectingArea, activeBoard, onScreenshot: handleScreenshot,
-    canvasOffsetX, canvasOffsetY
+    canvasOffsetX, canvasOffsetY, hiddenItemIds
   });
 
   const handleThemeChange = () => {
@@ -490,6 +516,7 @@ const App: React.FC = () => {
         handleDeleteItem={handleDeleteItem}
         handleDuplicateItem={handleDuplicateItem}
         handleStartEditItem={handleStartEditItem}
+        handleOpenNotes={setNotesItem}
         handleSendItemToBack={handleSendItemToBack}
         onToggleInventory={toggleInventory}
         inventory={inventory}
@@ -868,6 +895,17 @@ const App: React.FC = () => {
           titleImages={titleImages}
           textboxImages={textboxImages}
           activeFragmentIndex={editingItem.editingFragmentIndex}
+        />
+      )}
+
+      {notesItem && (
+        <NotesModal
+          item={notesItem}
+          onClose={() => setNotesItem(null)}
+          onSave={(updated) => {
+            handleUpdateItem(updated, selectedItemIds);
+            setNotesItem(null);
+          }}
         />
       )}
 

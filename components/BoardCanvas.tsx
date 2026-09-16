@@ -1,9 +1,9 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useMemo, useRef } from 'react';
 import DraggableItem from './DraggableItem';
 import ParticleSystem from './ParticleSystem';
 import { Board, BoardItem, ItemType } from '../types';
 import { GRID_SIZE, BOARD_TEXTURES } from '../constants';
-import { getEdgeConnectionPoint } from '../utils/canvasUtils';
+import { getEdgeConnectionPoint, getPointForSide } from '../utils/canvasUtils';
 
 interface BoardCanvasProps {
   viewportRef: React.RefObject<HTMLDivElement>;
@@ -18,6 +18,7 @@ interface BoardCanvasProps {
   handleDeleteItem: (id: string, setSelectedItemIds: any, setSelectedItemId: any) => void;
   handleDuplicateItem: (id: string) => void;
   handleStartEditItem: (item: BoardItem, fragmentIndex?: number) => void;
+  handleOpenNotes: (item: BoardItem) => void;
   handleSendItemToBack: (id: string) => void;
   onToggleInventory: (item: BoardItem) => void;
   inventory: BoardItem[];
@@ -56,6 +57,7 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
   handleDeleteItem,
   handleDuplicateItem,
   handleStartEditItem,
+  handleOpenNotes,
   handleSendItemToBack,
   onToggleInventory,
   inventory,
@@ -81,6 +83,29 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
   setMouseCoords
 }) => {
   const lastOffsets = useRef({ x: canvasOffsetX, y: canvasOffsetY });
+
+  const { hiddenItemIds, outgoing } = useMemo(() => {
+    const outgoing = new Map<string, string[]>();
+    (activeBoard.connections || []).forEach(c => {
+      if (!outgoing.has(c.fromId)) outgoing.set(c.fromId, []);
+      outgoing.get(c.fromId)!.push(c.toId);
+    });
+    // Simplification: an item hides if reachable from ANY collapsed ancestor via
+    // outgoing edges, even if it also has a second, non-collapsed ancestor chain
+    // (no DAG reconciliation fixpoint) -- fine for the tree-shaped diagrams this
+    // is built for; revisit only if real multi-parent usage shows up.
+    const hidden = new Set<string>();
+    activeBoard.items.filter(i => i.collapsed).forEach(root => {
+      const stack = [...(outgoing.get(root.id) || [])];
+      while (stack.length) {
+        const id = stack.pop()!;
+        if (hidden.has(id)) continue;
+        hidden.add(id);
+        stack.push(...(outgoing.get(id) || []));
+      }
+    });
+    return { hiddenItemIds: hidden, outgoing };
+  }, [activeBoard.items, activeBoard.connections]);
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current;
@@ -227,9 +252,10 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
                 const fromItem = activeBoard.items.find(i => i.id === conn.fromId);
                 const toItem = activeBoard.items.find(i => i.id === conn.toId);
                 if (!fromItem || !toItem) return null;
+                if (hiddenItemIds.has(conn.fromId) || hiddenItemIds.has(conn.toId)) return null;
 
-                const fromPoint = getEdgeConnectionPoint(fromItem, toItem);
-                const toPoint = getEdgeConnectionPoint(toItem, fromItem);
+                const fromPoint = conn.fromSide ? getPointForSide(fromItem, conn.fromSide) : getEdgeConnectionPoint(fromItem, toItem);
+                const toPoint = conn.toSide ? getPointForSide(toItem, conn.toSide) : getEdgeConnectionPoint(toItem, fromItem);
                 const fromX = fromPoint.x;
                 const fromY = fromPoint.y;
                 const toX = toPoint.x;
@@ -270,7 +296,7 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
             </g>
           </svg>
 
-          {activeBoard.items.map(item => (
+          {activeBoard.items.filter(item => !hiddenItemIds.has(item.id)).map(item => (
             <DraggableItem
               key={item.id}
               item={item}
@@ -278,6 +304,8 @@ const BoardCanvas: React.FC<BoardCanvasProps> = ({
               onDelete={(id) => handleDeleteItem(id, setSelectedItemIds, setSelectedItemId)}
               onDuplicate={handleDuplicateItem}
               onEdit={handleStartEditItem}
+              onOpenNotes={handleOpenNotes}
+              hasOutgoingConnections={outgoing.has(item.id)}
               onSendToBack={handleSendItemToBack}
               onToggleInventory={onToggleInventory}
               inventory={inventory}

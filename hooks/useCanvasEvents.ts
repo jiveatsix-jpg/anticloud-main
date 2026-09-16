@@ -18,6 +18,7 @@ interface UseCanvasEventsProps {
   onScreenshot: (area?: { x: number; y: number; width: number; height: number }) => void;
   canvasOffsetX?: number;
   canvasOffsetY?: number;
+  hiddenItemIds?: Set<string>;
 }
 
 export const useCanvasEvents = ({
@@ -35,7 +36,8 @@ export const useCanvasEvents = ({
   activeBoard,
   onScreenshot,
   canvasOffsetX = 0,
-  canvasOffsetY = 0
+  canvasOffsetY = 0,
+  hiddenItemIds
 }: UseCanvasEventsProps) => {
   const isPanning = useRef(false);
   const isAltDownRef = useRef(false);
@@ -237,7 +239,8 @@ export const useCanvasEvents = ({
           item.x < rectRight &&
           itemRight > finalX &&
           item.y < rectBottom &&
-          itemBottom > finalY
+          itemBottom > finalY &&
+          !(hiddenItemIds?.has(item.id))
         );
       })
       .map(item => item.id);
@@ -247,7 +250,7 @@ export const useCanvasEvents = ({
     selectionStartPoint.current = null;
     document.removeEventListener('mousemove', handleMultiSelectMouseMove);
     document.removeEventListener('mouseup', handleMultiSelectMouseUp);
-  }, [activeBoard, zoom, boardRef, setMultiSelectRect, setSelectedItemIds, handleMultiSelectMouseMove]);
+  }, [activeBoard, zoom, boardRef, setMultiSelectRect, setSelectedItemIds, handleMultiSelectMouseMove, hiddenItemIds]);
 
   const handlePanMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.button === 1) {

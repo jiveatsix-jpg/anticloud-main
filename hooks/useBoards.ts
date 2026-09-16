@@ -4,6 +4,7 @@ import { createNewBoard, isValidBoard } from '../utils/boardUtils';
 import { GRID_SIZE } from '../constants';
 import { storage } from '../utils/storageUtils';
 import { useHistory } from './useHistory';
+import { getConnectionSide } from '../utils/canvasUtils';
 
 export const useBoards = () => {
   const [isBoardsLoaded, setIsBoardsLoaded] = useState(false);
@@ -226,9 +227,16 @@ export const useBoards = () => {
       if (fromId === toId || connections.some(c => (c.fromId === fromId && c.toId === toId) || (c.fromId === toId && c.toId === fromId))) {
         return board;
       }
+      const fromItem = board.items.find(i => i.id === fromId);
+      const toItem = board.items.find(i => i.id === toId);
+      // Lock the anchor side in at creation time from the items' current
+      // positions, so it stays put afterwards instead of re-anchoring as
+      // either item moves -- only recreating the connection changes it.
+      const fromSide = fromItem && toItem ? getConnectionSide(fromItem, toItem) : undefined;
+      const toSide = fromItem && toItem ? getConnectionSide(toItem, fromItem) : undefined;
       return {
         ...board,
-        connections: [...connections, { id: `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, fromId, toId, color: 'var(--pixel-highlight-color, #ffaa00)' }]
+        connections: [...connections, { id: `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, fromId, toId, fromSide, toSide, color: 'var(--pixel-highlight-color, #ffaa00)' }]
       };
     }));
   }, [activeBoardIndex, boards, pushHistory]);

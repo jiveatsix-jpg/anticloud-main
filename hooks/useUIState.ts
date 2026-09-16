@@ -46,6 +46,7 @@ export const useUIState = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeModal, setActiveModal] = useState<ModalState>(null);
   const [editingItem, setEditingItem] = useState<BoardItem | null>(null);
+  const [notesItem, setNotesItem] = useState<BoardItem | null>(null);
   const [inventory, setInventory] = useState<BoardItem[]>([]);
   const [activeThemeIndex, setActiveThemeIndex] = useState(0);
   const [isTutorialActive, setIsTutorialActive] = useState(false);
@@ -125,6 +126,7 @@ export const useUIState = () => {
     activeCategory, handleCategoryEnter, handleCategoryLeave,
     activeModal, setActiveModal,
     editingItem, setEditingItem,
+    notesItem, setNotesItem,
     inventory, setInventory,
     activeThemeIndex, setActiveThemeIndex,
     isTutorialActive, setIsTutorialActive,

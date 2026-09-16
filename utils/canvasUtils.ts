@@ -1,4 +1,4 @@
-import { Board, BoardItem, ItemType } from '../types';
+import { Board, BoardItem, ItemType, ConnectionSide } from '../types';
 import { FONT_FACES, DEFAULT_BOX_BORDER_SLICE, DEFAULT_FRAME_BORDER_SLICE } from '../constants';
 
 interface BorderSlice { top: number; right: number; bottom: number; left: number; }
@@ -55,28 +55,56 @@ interface ConnectableRect {
 }
 
 /**
- * Where a connection line should touch `from`'s box: the midpoint of whichever
- * side (top/bottom/left/right) faces `to`, instead of `from`'s raw center —
- * so a link coming from roughly the side sits flush on that side instead of
- * cutting across the box diagonally.
+ * Which side (top/bottom/left/right) of `from` faces `to`, compared against
+ * `from`'s own aspect ratio (not a raw 45° split) so a wide box favors
+ * exiting left/right over top/bottom, and vice versa.
  */
-export const getEdgeConnectionPoint = (from: ConnectableRect, to: ConnectableRect): { x: number; y: number } => {
+export const getConnectionSide = (from: ConnectableRect, to: ConnectableRect): ConnectionSide => {
   const fromCenterX = from.x + from.width / 2;
   const fromCenterY = from.y + from.height / 2;
   const toCenterX = to.x + to.width / 2;
   const toCenterY = to.y + to.height / 2;
   const dx = toCenterX - fromCenterX;
   const dy = toCenterY - fromCenterY;
-  if (dx === 0 && dy === 0) return { x: fromCenterX, y: fromCenterY };
-
   const halfWidth = from.width / 2;
   const halfHeight = from.height / 2;
-  // Compare the direction against the box's own aspect ratio (not a raw 45°
-  // split) so a wide box favors exiting left/right over top/bottom, and vice versa.
   if (Math.abs(dx) * halfHeight > Math.abs(dy) * halfWidth) {
-    return { x: fromCenterX + (dx > 0 ? halfWidth : -halfWidth), y: fromCenterY };
+    return dx > 0 ? 'right' : 'left';
   }
-  return { x: fromCenterX, y: fromCenterY + (dy > 0 ? halfHeight : -halfHeight) };
+  return dy > 0 ? 'bottom' : 'top';
+};
+
+/**
+ * Where a connection line should touch `from`'s box: the midpoint of whichever
+ * side (top/bottom/left/right) faces `to`, instead of `from`'s raw center —
+ * so a link coming from roughly the side sits flush on that side instead of
+ * cutting across the box diagonally. Recomputed every render, so the anchor
+ * slides as the boxes move; use `getPointForSide` for a side locked in at
+ * connection-creation time.
+ */
+export const getEdgeConnectionPoint = (from: ConnectableRect, to: ConnectableRect): { x: number; y: number } => {
+  const fromCenterX = from.x + from.width / 2;
+  const fromCenterY = from.y + from.height / 2;
+  const toCenterX = to.x + to.width / 2;
+  const toCenterY = to.y + to.height / 2;
+  if (fromCenterX === toCenterX && fromCenterY === toCenterY) {
+    return { x: fromCenterX, y: fromCenterY };
+  }
+  return getPointForSide(from, getConnectionSide(from, to));
+};
+
+/** The midpoint of a specific, already-decided side — independent of where the other item sits. */
+export const getPointForSide = (rect: ConnectableRect, side: ConnectionSide): { x: number; y: number } => {
+  const centerX = rect.x + rect.width / 2;
+  const centerY = rect.y + rect.height / 2;
+  const halfWidth = rect.width / 2;
+  const halfHeight = rect.height / 2;
+  switch (side) {
+    case 'left': return { x: centerX - halfWidth, y: centerY };
+    case 'right': return { x: centerX + halfWidth, y: centerY };
+    case 'top': return { x: centerX, y: centerY - halfHeight };
+    case 'bottom': return { x: centerX, y: centerY + halfHeight };
+  }
 };
 
 export const wrapText = (context: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {

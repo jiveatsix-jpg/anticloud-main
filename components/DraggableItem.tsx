@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { BoardItem, ItemType } from '../types';
-import { DeleteIcon, EditIcon, DuplicateIcon, SendToBackIcon, DpadUpIcon, DpadDownIcon, DpadLeftIcon, DpadRightIcon, PlayIcon, PauseIcon, ResetIcon, CopyIcon, PasteIcon, DownloadIcon, FileIcon, LinkIcon, CheckboxIcon, PaletteIcon } from './Icons';
+import { DeleteIcon, EditIcon, DuplicateIcon, SendToBackIcon, DpadUpIcon, DpadDownIcon, DpadLeftIcon, DpadRightIcon, PlayIcon, PauseIcon, ResetIcon, CopyIcon, PasteIcon, DownloadIcon, FileIcon, LinkIcon, CheckboxIcon, PaletteIcon, NotesIcon } from './Icons';
 
 interface DraggableItemProps {
   item: BoardItem;
@@ -8,6 +8,7 @@ interface DraggableItemProps {
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
   onEdit: (item: BoardItem, fragmentIndex?: number) => void;
+  onOpenNotes: (item: BoardItem) => void;
   onSendToBack: (id: string) => void;
   onToggleInventory: (item: BoardItem) => void;
   inventory: BoardItem[];
@@ -27,9 +28,10 @@ interface DraggableItemProps {
   canvasOffsetX?: number;
   canvasOffsetY?: number;
   setDragging?: (dragging: boolean) => void;
+  hasOutgoingConnections?: boolean;
 }
 
-const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete, onDuplicate, onEdit, onSendToBack, onToggleInventory, inventory, boardRef, zoom, snapToGrid, gridSize, isMobileMode, isSelected, onSelect, selectedItemIds, connectingFromId, onConnectStart, onConnectComplete, setHoveredItemId, isHovered, canvasOffsetX = 0, canvasOffsetY = 0, setDragging }) => {
+const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete, onDuplicate, onEdit, onOpenNotes, onSendToBack, onToggleInventory, inventory, boardRef, zoom, snapToGrid, gridSize, isMobileMode, isSelected, onSelect, selectedItemIds, connectingFromId, onConnectStart, onConnectComplete, setHoveredItemId, isHovered, canvasOffsetX = 0, canvasOffsetY = 0, setDragging, hasOutgoingConnections = false }) => {
   // Ajuste fino para la asimetría del sprite (EN PÍXELES) - SOLO TIENES QUE MODIFICAR ESTO
   const MARGENES_TEXTO = {
     izquierdo: 15,
@@ -54,6 +56,10 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
   const moveIntervalRef = useRef<number | null>(null);
   const itemRef = useRef(item);
   const lastRightClickRef = useRef<number>(0);
+  // Captures whether the item was ALREADY selected right before this mousedown (i.e. from
+  // the previous render, before onSelect below has any effect) -- a plain click on an
+  // already-selected item (no drag in between) opens its notes, a second click.
+  const wasSelectedRef = useRef(false);
 
   const textDragRef = useRef<{ isDragging: boolean; startX: number; startY: number; initialOffsetX: number; initialOffsetY: number; el: HTMLElement | null }>({
     isDragging: false, startX: 0, startY: 0, initialOffsetX: 0, initialOffsetY: 0, el: null
@@ -291,6 +297,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
       }
     }
 
+    wasSelectedRef.current = isSelected;
     onSelect(item.id);
 
     if (!dragRef.current) return;
@@ -405,8 +412,11 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
     // Prevent position update if position hasn't changed to avoid re-render
     if (item.x !== finalX || item.y !== finalY) {
       onUpdate({ ...item, x: finalX, y: finalY });
+    } else if (wasSelectedRef.current && selectedItemIds.length <= 1) {
+      // A plain click (no movement) on an item that was already selected -- open its notes.
+      onOpenNotes(item);
     }
-  }, [isDragging, boardRef, item, onUpdate, zoom, snapToGrid, gridSize]);
+  }, [isDragging, boardRef, item, onUpdate, zoom, snapToGrid, gridSize, selectedItemIds, onOpenNotes]);
 
   useEffect(() => {
     if (isDragging) {
@@ -813,6 +823,9 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
               </button>
             </>
           )}
+          <button onClick={() => onOpenNotes(item)} className="pixel-button p-1 bg-teal-600 hover:bg-teal-500" title="Notas">
+            <NotesIcon />
+          </button>
           <button onClick={() => onDuplicate(item.id)} className="pixel-button p-1 bg-green-600 hover:bg-green-500" title="Duplicar Elemento">
             <DuplicateIcon />
           </button>
@@ -868,6 +881,22 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
           </div>
         )}
       </div>
+      {/* Fold/unfold toggle -- always visible (not just on hover) when this item has its own
+          outgoing connections, so the user always sees there's a branch to collapse. Sits on
+          the item itself rather than on a connection line, since one toggle governs ALL of
+          this item's children at once. */}
+      {hasOutgoingConnections && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onUpdate({ ...item, collapsed: !item.collapsed });
+          }}
+          className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-10 pixel-button w-6 h-6 flex items-center justify-center pointer-events-auto bg-slate-700 hover:bg-slate-600"
+          title={item.collapsed ? "Expandir elementos conectados" : "Plegar elementos conectados"}
+        >
+          {item.collapsed ? '+' : '−'}
+        </button>
+      )}
       {/* Music / Counter controls */}
       {(isMusicItem || isCounterItem) && (
         <>
