@@ -24,6 +24,8 @@ export type ModalState =
   | { type: 'editSpriteImages'; key: string }
   | 'suggestions'
   | 'boardSettings'
+  | 'newBoard'
+  | 'saveSlots'
   | 'layers'
   | 'inventory'
   | 'uiManager'

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Board, BoardItem } from '../types';
-import { createNewBoard, isValidBoard } from '../utils/boardUtils';
+import { Board, BoardItem, BoardSize } from '../types';
+import { createNewBoard, generateBoardId, isValidBoard } from '../utils/boardUtils';
 import { GRID_SIZE } from '../constants';
 import { storage } from '../utils/storageUtils';
 import { useHistory } from './useHistory';
@@ -175,10 +175,22 @@ export const useBoards = () => {
     });
   }, [activeBoardIndex, boards, pushHistory]);
 
-  const handleAddBoard = useCallback(() => {
+  const handleAddBoard = useCallback((size?: BoardSize) => {
     pushHistory(boards);
-    setBoards(prev => [...prev, createNewBoard()]);
+    setBoards(prev => [...prev, createNewBoard(size?.width, size?.height)]);
   }, [boards, pushHistory]);
+
+  // Appends a copy of `board` as a new board and activates it; never replaces existing boards.
+  // Reads boardsRef because callers (slot loading) invoke it after an await, when a render closure could be stale.
+  const handleImportBoard = useCallback((board: Board) => {
+    const current = boardsRef.current;
+    let id = generateBoardId();
+    while (current.some(b => b.id === id)) id = generateBoardId();
+    const imported: Board = { ...JSON.parse(JSON.stringify(board)), id };
+    pushHistory(current);
+    setBoards(prev => [...prev, imported]);
+    setActiveBoardIndex(current.length);
+  }, [pushHistory]);
 
   const handleRemoveBoard = useCallback((index: number) => {
     pushHistory(boards);
@@ -265,6 +277,7 @@ export const useBoards = () => {
     handleUngroupItems,
     handleSendItemToBoard,
     handleAddBoard,
+    handleImportBoard,
     handleRemoveBoard,
     handleUpdateBoardSettings,
     handleAddConnection,

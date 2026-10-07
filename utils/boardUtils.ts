@@ -1,5 +1,5 @@
 import { Board, ItemType, BoardItem, TitleImageCollections, TextboxImageCollections, PixelImageCollections, SpriteImageCollections, TitleCollectionKey, TextboxCollectionKey } from '../types';
-import { DEFAULT_BACKGROUND, ASSET_SLOTS, DEFAULT_TITLE_IMAGE_URLS, DEFAULT_TEXTBOX_IMAGE_URLS, DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_HEIGHT } from '../constants';
+import { DEFAULT_BACKGROUND, ASSET_SLOTS, DEFAULT_TITLE_IMAGE_URLS, DEFAULT_TEXTBOX_IMAGE_URLS, DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_HEIGHT, BOARD_MIN_SIZE, BOARD_MAX_SIZE } from '../constants';
 import { generateImageVariants, urlToBase64 } from '../components/imageProcessor';
 import { storage } from './storageUtils';
 
@@ -11,12 +11,19 @@ export const padArray = (arr: (string | null)[], length: number): (string | null
   return newArr.slice(0, length);
 };
 
-export const createNewBoard = (): Board => ({
-  id: `board_${Date.now()}_${Math.random()}`,
+export const generateBoardId = (): string => `board_${Date.now()}_${Math.random()}`;
+
+export const clampBoardSize = (value: number, fallback: number): number => {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.min(BOARD_MAX_SIZE, Math.max(BOARD_MIN_SIZE, Math.round(value)));
+};
+
+export const createNewBoard = (width = DEFAULT_BOARD_WIDTH, height = DEFAULT_BOARD_HEIGHT): Board => ({
+  id: generateBoardId(),
   items: [],
   backgroundUrl: DEFAULT_BACKGROUND,
-  width: DEFAULT_BOARD_WIDTH,
-  height: DEFAULT_BOARD_HEIGHT,
+  width: clampBoardSize(width, DEFAULT_BOARD_WIDTH),
+  height: clampBoardSize(height, DEFAULT_BOARD_HEIGHT),
   backgroundMode: 'expand',
 });
 

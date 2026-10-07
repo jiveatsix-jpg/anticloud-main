@@ -67,6 +67,25 @@ export const FONT_FACES = [
 export const GRID_SIZE = 20;
 export const DEFAULT_BOARD_WIDTH = 3000;
 export const DEFAULT_BOARD_HEIGHT = 2000;
+export const BOARD_MIN_SIZE = 50;
+export const BOARD_MAX_SIZE = 10000;
+
+export interface BoardSizePreset {
+  id: string;
+  label: string;
+  width: number;
+  height: number;
+}
+
+export const BOARD_SIZE_PRESETS: BoardSizePreset[] = [
+  { id: 'standard', label: 'Estándar', width: DEFAULT_BOARD_WIDTH, height: DEFAULT_BOARD_HEIGHT },
+  { id: 'small', label: 'Pequeña', width: 1500, height: 1000 },
+  { id: 'large', label: 'Grande', width: 5000, height: 3500 },
+  { id: 'square', label: 'Cuadrada', width: 2500, height: 2500 },
+  { id: 'panoramic', label: 'Panorámica', width: 4000, height: 1500 },
+  { id: 'vertical', label: 'Vertical', width: 2000, height: 3000 },
+  { id: 'full-hd', label: 'Pantalla Full HD', width: 1920, height: 1080 },
+];
 
 export interface Theme {
   name: string;

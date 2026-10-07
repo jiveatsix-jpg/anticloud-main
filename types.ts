@@ -100,6 +100,26 @@ export interface Board {
   particles?: 'none' | 'rain' | 'confetti';
 }
 
+export interface BoardSize {
+  width: number;
+  height: number;
+}
+
+export interface BoardFile {
+  format: 'anticloud-board';
+  version: 1;
+  name: string;
+  savedAt: number;
+  board: Board;
+}
+
+export interface SaveSlotMeta {
+  id: string;
+  name: string;
+  savedAt: number;
+  itemCount: number;
+}
+
 export type TextboxCollectionKey = 'x1' | 'x4' | 'x16';
 
 export interface TextboxImageCollections {

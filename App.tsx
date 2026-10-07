@@ -10,6 +10,8 @@ import TextEditModal from './components/TextEditModal';
 import FrameEditModal from './components/FrameEditModal';
 import NotesModal from './components/NotesModal';
 import BoardSettingsModal from './components/BoardSettingsModal';
+import NewBoardModal from './components/NewBoardModal';
+import SaveSlotsModal from './components/SaveSlotsModal';
 import LayersModal from './components/LayersModal';
 import InventoryModal from './components/InventoryModal';
 import SuggestionsModal from './components/SuggestionsModal';
@@ -35,7 +37,7 @@ const App: React.FC = () => {
     isBoardsLoaded,
     boards, setBoards, activeBoardIndex, setActiveBoardIndex, activeBoard,
     handleUpdateItem, handleDeleteItem, handleDuplicateItem,
-    handleSendItemToBack, handleReorderItem, handleGroupItems, handleUngroupItems, handleSendItemToBoard, handleAddBoard, handleRemoveBoard,
+    handleSendItemToBack, handleReorderItem, handleGroupItems, handleUngroupItems, handleSendItemToBoard, handleAddBoard, handleImportBoard, handleRemoveBoard,
     handleUpdateBoardSettings, handleAddConnection, handleRemoveConnection,
     canUndo, canRedo, undo, redo, pushHistory, boardsRef
   } = useBoards();
@@ -574,7 +576,6 @@ const App: React.FC = () => {
         activeBoardIndex={activeBoardIndex}
         boardsCount={boards.length}
         setActiveBoardIndex={setActiveBoardIndex}
-        handleAddBoard={handleAddBoard}
         handleRemoveBoard={handleRemoveBoard}
         isMultiSelectMode={isMultiSelectMode}
         setIsMultiSelectMode={setIsMultiSelectMode}
@@ -834,6 +835,25 @@ const App: React.FC = () => {
           board={activeBoard}
           onClose={() => setActiveModal(null)}
           onSave={handleUpdateBoardSettings}
+        />
+      )}
+
+      {activeModal === 'newBoard' && (
+        <NewBoardModal
+          onClose={() => setActiveModal(null)}
+          onCreate={(size) => {
+            handleAddBoard(size);
+            setActiveModal(null);
+          }}
+        />
+      )}
+
+      {activeModal === 'saveSlots' && (
+        <SaveSlotsModal
+          board={activeBoard}
+          boardNumber={activeBoardIndex + 1}
+          onClose={() => setActiveModal(null)}
+          onImportBoard={handleImportBoard}
         />
       )}
 

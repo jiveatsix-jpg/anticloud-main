@@ -27,7 +27,6 @@ interface ToolbarProps {
   activeBoardIndex: number;
   boardsCount: number;
   setActiveBoardIndex: React.Dispatch<React.SetStateAction<number>>;
-  handleAddBoard: () => void;
   handleRemoveBoard: (index: number) => void;
   isMultiSelectMode: boolean;
   setIsMultiSelectMode: React.Dispatch<React.SetStateAction<boolean>>;
@@ -69,7 +68,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
   activeBoardIndex,
   boardsCount,
   setActiveBoardIndex,
-  handleAddBoard,
   handleRemoveBoard,
   isMultiSelectMode,
   setIsMultiSelectMode,
@@ -158,7 +156,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                   <BoardNextIcon />
                 </button>
               </div>
-              <MenuItem icon={<PlusIcon />} label="Nueva Pizarra" onClick={handleAddBoard} color="bg-green-600" title="Crea una pizarra nueva y en blanco." />
+              <MenuItem icon={<PlusIcon />} label="Nueva Pizarra" onClick={() => setActiveModal('newBoard')} color="bg-green-600" title="Crea una pizarra nueva y en blanco, eligiendo primero su tamaño." />
               <MenuItem icon={<SettingsIcon />} label="Ajustes de Pizarra" onClick={() => setActiveModal('boardSettings')} color="bg-indigo-700" title="Abre la configuración de la pizarra actual." />
               {boardsCount > 1 && (
                 <MenuItem icon={<DeleteIcon />} label="Eliminar Pizarra" onClick={() => handleRemoveBoard(activeBoardIndex)} color="bg-red-600" title="Elimina la pizarra actual. No se puede deshacer." />
@@ -293,6 +291,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <div className="h-0.5 bg-slate-800 my-1" />
               <MenuItem icon={<FileIcon />} label="Guardar a Disquete" onClick={handleExportToDisk} color="bg-emerald-600" title="Descarga todos los datos de la app (pizarras, imágenes, ajustes) como un archivo .anticloud." />
               <MenuItem icon={<FileIcon />} label="Cargar de Disquete" onClick={() => disketteInputRef.current?.click()} color="bg-indigo-600" title="Carga datos guardados desde un archivo .anticloud, reemplazando el estado actual." />
+              <MenuItem icon={<FileIcon />} label="Guardados de Pizarra" onClick={() => setActiveModal('saveSlots')} color="bg-sky-600" title="Abre los guardados de pizarra: guarda copias dentro de la app o exporta e importa una pizarra como archivo .anticloud-board, sin reemplazar las demás." />
             </div>
           )}
         </div>
