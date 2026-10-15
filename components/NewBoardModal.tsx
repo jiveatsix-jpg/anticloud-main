@@ -70,7 +70,7 @@ const NewBoardModal: React.FC<NewBoardModalProps> = ({ onClose, onCreate }) => {
     <Modal
       onClose={onClose}
       title="Nueva Pizarra"
-      className="max-w-lg"
+      className="max-w-2xl"
       footer={
         <div className="flex gap-3">
           <button onClick={onClose} className="pixel-button flex-1 p-3 bg-white/10 hover:bg-white/20">
@@ -89,7 +89,7 @@ const NewBoardModal: React.FC<NewBoardModalProps> = ({ onClose, onCreate }) => {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <span className="text-sm text-white/70">Tamaño de la pizarra</span>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {BOARD_SIZE_PRESETS.map(preset => {
               const isDefault = preset.width === DEFAULT_BOARD_WIDTH && preset.height === DEFAULT_BOARD_HEIGHT;
               return (
@@ -107,7 +107,7 @@ const NewBoardModal: React.FC<NewBoardModalProps> = ({ onClose, onCreate }) => {
             })}
             <button
               onClick={handleSelectCustom}
-              className={`pixel-button p-2 text-left col-span-2 ${isCustom ? 'pixel-button-active' : 'bg-white/5'}`}
+              className={`pixel-button p-2 text-left col-span-2 sm:col-span-3 ${isCustom ? 'pixel-button-active' : 'bg-white/5'}`}
             >
               <span className="block text-sm">Personalizado</span>
               <span className="block text-[10px] text-white/60 font-mono">Elige el ancho y el alto</span>

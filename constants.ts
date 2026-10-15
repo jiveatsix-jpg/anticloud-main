@@ -85,6 +85,11 @@ export const BOARD_SIZE_PRESETS: BoardSizePreset[] = [
   { id: 'panoramic', label: 'Panorámica', width: 4000, height: 1500 },
   { id: 'vertical', label: 'Vertical', width: 2000, height: 3000 },
   { id: 'full-hd', label: 'Pantalla Full HD', width: 1920, height: 1080 },
+  { id: 'medium', label: 'Mediana', width: 1000, height: 700 },
+  { id: 'compact', label: 'Compacta', width: 800, height: 600 },
+  { id: 'small-square', label: 'Cuadrada pequeña', width: 800, height: 800 },
+  { id: 'small-vertical', label: 'Vertical pequeña', width: 600, height: 900 },
+  { id: 'mini', label: 'Mini', width: 400, height: 300 },
 ];
 
 export interface Theme {
