@@ -1,5 +1,5 @@
 import { createStore, delMany, get, getMany, keys, setMany, type UseStore } from 'idb-keyval';
-import { Board, SaveSlotMeta } from '../types';
+import { Board, RecoveryBackupMeta, SaveSlotMeta } from '../types';
 import { isValidBoard } from './boardUtils';
 import { MAX_BOARD_NAME_LENGTH } from './boardFileUtils';
 
@@ -66,6 +66,66 @@ export const loadSlot = async (id: string): Promise<Board | null> => {
     return stored.board;
   } catch (e) {
     throw storageError('No se pudo cargar el guardado.', e);
+  }
+};
+
+// Recovery backups mirror the slot layout: the raw text under `recovery:<suffix>` and a tiny
+// `recovery-meta:<suffix>` twin, so listing never loads the (possibly tens of MB) raw strings.
+// The `recovery-meta:` prefix deliberately does not match the `meta:` filter used by listSlots.
+const RECOVERY_PREFIX = 'recovery:';
+const RECOVERY_META_PREFIX = 'recovery-meta:';
+
+const isValidRecoveryMeta = (value: unknown): value is RecoveryBackupMeta => {
+  if (!value || typeof value !== 'object') return false;
+  const m = value as Partial<RecoveryBackupMeta>;
+  return typeof m.key === 'string' && typeof m.savedAt === 'number' && typeof m.bytes === 'number';
+};
+
+// Keeps the raw bytes of a stored value the app could not fully read, so replacing it with defaults
+// never destroys user data. The key is derived from the content, so backing up the same value twice is a no-op.
+export const saveRecoveryBackup = async (raw: string): Promise<void> => {
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) hash = (hash * 31 + raw.charCodeAt(i)) | 0;
+  const suffix = `${raw.length}:${(hash >>> 0).toString(36)}`;
+  // `bytes` is the string length: close enough for display, since the content is mostly ASCII data URLs.
+  const meta: RecoveryBackupMeta = { key: `${RECOVERY_PREFIX}${suffix}`, savedAt: Date.now(), bytes: raw.length };
+  try {
+    await setMany(
+      [[meta.key, { savedAt: meta.savedAt, raw }], [`${RECOVERY_META_PREFIX}${suffix}`, meta]],
+      getSlotStore(),
+    );
+  } catch (e) {
+    throw storageError('No se pudo respaldar el contenido ilegible de las pizarras.', e);
+  }
+};
+
+export const listRecoveryBackups = async (): Promise<RecoveryBackupMeta[]> => {
+  try {
+    const store = getSlotStore();
+    const metaKeys = (await keys<string>(store)).filter(k => typeof k === 'string' && k.startsWith(RECOVERY_META_PREFIX));
+    const metas = await getMany<unknown>(metaKeys, store);
+    return metas.filter(isValidRecoveryMeta).sort((a, b) => b.savedAt - a.savedAt);
+  } catch (e) {
+    throw storageError('No se pudo leer la lista de respaldos de recuperación.', e);
+  }
+};
+
+export const loadRecoveryBackup = async (key: string): Promise<string | null> => {
+  if (!key.startsWith(RECOVERY_PREFIX)) return null;
+  try {
+    const stored = await get<{ raw?: unknown }>(key, getSlotStore());
+    return typeof stored?.raw === 'string' ? stored.raw : null;
+  } catch (e) {
+    throw storageError('No se pudo leer el respaldo de recuperación.', e);
+  }
+};
+
+export const deleteRecoveryBackup = async (key: string): Promise<void> => {
+  if (!key.startsWith(RECOVERY_PREFIX)) return;
+  try {
+    await delMany([key, `${RECOVERY_META_PREFIX}${key.slice(RECOVERY_PREFIX.length)}`], getSlotStore());
+  } catch (e) {
+    throw storageError('No se pudo borrar el respaldo de recuperación.', e);
   }
 };
 

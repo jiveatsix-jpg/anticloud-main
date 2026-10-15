@@ -1,15 +1,20 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Board, SaveSlotMeta } from '../types';
+import { Board, RecoveryBackupMeta, SaveSlotMeta } from '../types';
 import Modal from './Modal';
 import { FileIcon } from './Icons';
-import { deleteSlot, listSlots, loadSlot, saveSlot } from '../utils/slotStorage';
-import { BOARD_FILE_EXTENSION, MAX_BOARD_NAME_LENGTH, downloadBoardFile, parseBoardFile } from '../utils/boardFileUtils';
+import {
+  deleteRecoveryBackup, deleteSlot, listRecoveryBackups, listSlots, loadRecoveryBackup, loadSlot, saveSlot,
+} from '../utils/slotStorage';
+import {
+  BOARD_FILE_EXTENSION, MAX_BOARD_NAME_LENGTH, downloadBoardFile, downloadTextFile, parseBoardFile,
+} from '../utils/boardFileUtils';
+import { salvageBoards } from '../utils/boardSalvage';
 
 interface SaveSlotsModalProps {
   board: Board;
   boardNumber: number;
   onClose: () => void;
-  onImportBoard: (board: Board) => void;
+  onImportBoards: (boards: Board[]) => void;
 }
 
 const formatSavedAt = (savedAt: number) =>
@@ -17,10 +22,89 @@ const formatSavedAt = (savedAt: number) =>
 
 const formatItemCount = (count: number) => `${count} ${count === 1 ? 'elemento' : 'elementos'}`;
 
-const SaveSlotsModal: React.FC<SaveSlotsModalProps> = ({ board, boardNumber, onClose, onImportBoard }) => {
+const formatBytes = (bytes: number) =>
+  bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+
+const formatBackupFileName = (savedAt: number) => {
+  const d = new Date(savedAt);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `anticloud-recuperacion-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`;
+};
+
+interface RecoveryBackupRowProps {
+  backup: RecoveryBackupMeta;
+  isBusy: boolean;
+  isConfirmingDelete: boolean;
+  onRestore: () => void;
+  onDownload: () => void;
+  onAskDelete: () => void;
+  onCancelDelete: () => void;
+  onConfirmDelete: () => void;
+}
+
+const RecoveryBackupRow: React.FC<RecoveryBackupRowProps> = ({
+  backup, isBusy, isConfirmingDelete, onRestore, onDownload, onAskDelete, onCancelDelete, onConfirmDelete,
+}) => (
+  <li className="pixel-content-box flex flex-wrap items-center justify-between gap-2">
+    <div className="min-w-0 flex-1">
+      <div>{formatSavedAt(backup.savedAt)}</div>
+      <div className="text-[10px] text-white/50 font-mono">{formatBytes(backup.bytes)}</div>
+    </div>
+    {isConfirmingDelete ? (
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-red-300">¿Borrar? Puede ser la única copia y no se puede deshacer.</span>
+        <button
+          onClick={onCancelDelete}
+          disabled={isBusy}
+          className="pixel-button px-3 py-1 text-sm bg-white/10 hover:bg-white/20"
+        >
+          Cancelar
+        </button>
+        <button
+          onClick={onConfirmDelete}
+          disabled={isBusy}
+          className="pixel-button px-3 py-1 text-sm bg-red-700 hover:bg-red-600"
+        >
+          Borrar
+        </button>
+      </div>
+    ) : (
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={onRestore}
+          disabled={isBusy}
+          title="Intenta recuperar las pizarras de este respaldo y las añade como pizarras nuevas."
+          className="pixel-button px-3 py-1 text-sm bg-indigo-600 hover:bg-indigo-500"
+        >
+          Intentar restaurar
+        </button>
+        <button
+          onClick={onDownload}
+          disabled={isBusy}
+          title="Descarga el contenido original del respaldo como archivo .json."
+          className="pixel-button px-3 py-1 text-sm bg-emerald-600 hover:bg-emerald-500"
+        >
+          Descargar
+        </button>
+        <button
+          onClick={onAskDelete}
+          disabled={isBusy}
+          title="Elimina este respaldo de forma permanente."
+          className="pixel-button px-3 py-1 text-sm bg-red-700 hover:bg-red-600"
+        >
+          Borrar
+        </button>
+      </div>
+    )}
+  </li>
+);
+
+const SaveSlotsModal: React.FC<SaveSlotsModalProps> = ({ board, boardNumber, onClose, onImportBoards }) => {
   const defaultName = `Pizarra ${boardNumber}`;
   const [name, setName] = useState(defaultName);
   const [slots, setSlots] = useState<SaveSlotMeta[]>([]);
+  const [recoveryBackups, setRecoveryBackups] = useState<RecoveryBackupMeta[]>([]);
+  const [deleteBackupKey, setDeleteBackupKey] = useState<string | null>(null);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,9 +125,21 @@ const SaveSlotsModal: React.FC<SaveSlotsModalProps> = ({ board, boardNumber, onC
     }
   }, []);
 
+  const refreshRecoveryBackups = useCallback(async () => {
+    try {
+      setRecoveryBackups(await listRecoveryBackups());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo leer la lista de respaldos de recuperación.');
+    }
+  }, []);
+
+  const refreshLists = useCallback(async () => {
+    await Promise.all([refreshSlots(), refreshRecoveryBackups()]);
+  }, [refreshSlots, refreshRecoveryBackups]);
+
   useEffect(() => {
-    refreshSlots();
-  }, [refreshSlots]);
+    refreshLists();
+  }, [refreshLists]);
 
   const run = async (action: () => Promise<void>) => {
     setIsBusy(true);
@@ -52,6 +148,7 @@ const SaveSlotsModal: React.FC<SaveSlotsModalProps> = ({ board, boardNumber, onC
     try {
       await action();
     } catch (e) {
+      setNotice(null);
       setError(e instanceof Error ? e.message : 'Ocurrió un error inesperado.');
     } finally {
       setIsBusy(false);
@@ -78,7 +175,7 @@ const SaveSlotsModal: React.FC<SaveSlotsModalProps> = ({ board, boardNumber, onC
   const handleLoad = (slot: SaveSlotMeta) => run(async () => {
     const loaded = await loadSlot(slot.id);
     if (!loaded) throw new Error('No se encontró el guardado. Puede que ya se haya borrado.');
-    onImportBoard(loaded);
+    onImportBoards([loaded]);
     onClose();
   });
 
@@ -86,6 +183,30 @@ const SaveSlotsModal: React.FC<SaveSlotsModalProps> = ({ board, boardNumber, onC
     await deleteSlot(slot.id);
     setDeleteTargetId(null);
     await refreshSlots();
+  });
+
+  const handleRestoreBackup = (backup: RecoveryBackupMeta) => run(async () => {
+    setNotice('Recuperando pizarras, esto puede tardar unos segundos...');
+    const raw = await loadRecoveryBackup(backup.key);
+    if (raw === null) throw new Error('No se encontró el respaldo. Puede que ya se haya borrado.');
+    const salvaged = salvageBoards(raw);
+    setNotice(null);
+    if (salvaged.length === 0) throw new Error('No se pudo recuperar ninguna pizarra de este respaldo.');
+    onImportBoards(salvaged);
+    onClose();
+  });
+
+  const handleDownloadBackup = (backup: RecoveryBackupMeta) => run(async () => {
+    const raw = await loadRecoveryBackup(backup.key);
+    if (raw === null) throw new Error('No se encontró el respaldo. Puede que ya se haya borrado.');
+    downloadTextFile(raw, formatBackupFileName(backup.savedAt));
+    setNotice('Se inició la descarga del respaldo.');
+  });
+
+  const handleDeleteBackup = (backup: RecoveryBackupMeta) => run(async () => {
+    await deleteRecoveryBackup(backup.key);
+    setDeleteBackupKey(null);
+    await refreshLists();
   });
 
   const handleExport = () => {
@@ -112,7 +233,7 @@ const SaveSlotsModal: React.FC<SaveSlotsModalProps> = ({ board, boardNumber, onC
         console.error('ANTI_CLOUD Error al leer el archivo de pizarra:', readError);
         throw new Error('No se pudo leer el archivo.');
       }
-      onImportBoard(parseBoardFile(text).board);
+      onImportBoards([parseBoardFile(text).board]);
       onClose();
     });
   };
@@ -274,6 +395,32 @@ const SaveSlotsModal: React.FC<SaveSlotsModalProps> = ({ board, boardNumber, onC
             )}
           </div>
         </div>
+
+        {recoveryBackups.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
+              <h3 className="text-sm text-white/70">Respaldos de recuperación</h3>
+              <p className="text-[10px] text-white/50 font-mono">
+                Se guardaron automáticamente porque las pizarras guardadas no se pudieron leer por completo.
+              </p>
+            </div>
+            <ul className="flex flex-col gap-2 max-h-[25vh] overflow-y-auto">
+              {recoveryBackups.map((backup) => (
+                <RecoveryBackupRow
+                  key={backup.key}
+                  backup={backup}
+                  isBusy={isBusy}
+                  isConfirmingDelete={deleteBackupKey === backup.key}
+                  onRestore={() => handleRestoreBackup(backup)}
+                  onDownload={() => handleDownloadBackup(backup)}
+                  onAskDelete={() => setDeleteBackupKey(backup.key)}
+                  onCancelDelete={() => setDeleteBackupKey(null)}
+                  onConfirmDelete={() => handleDeleteBackup(backup)}
+                />
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </Modal>
   );

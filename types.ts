@@ -120,6 +120,16 @@ export interface SaveSlotMeta {
   itemCount: number;
 }
 
+export interface RecoveryBackupMeta {
+  key: string;
+  savedAt: number;
+  bytes: number;
+}
+
+export interface StorageNotice {
+  kind: 'recovered' | 'read-failed' | 'backup-failed';
+}
+
 export type TextboxCollectionKey = 'x1' | 'x4' | 'x16';
 
 export interface TextboxImageCollections {

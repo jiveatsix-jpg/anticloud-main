@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Board, BoardItem, BoardSize } from '../types';
+import { Board, BoardItem, BoardSize, StorageNotice } from '../types';
 import { createNewBoard, generateBoardId, isValidBoard } from '../utils/boardUtils';
 import { GRID_SIZE } from '../constants';
 import { storage } from '../utils/storageUtils';
+import { saveRecoveryBackup } from '../utils/slotStorage';
 import { useHistory } from './useHistory';
 import { getConnectionSide } from '../utils/canvasUtils';
 
@@ -15,19 +16,48 @@ export const useBoards = () => {
   
   const boardsRef = useRef(boards);
   boardsRef.current = boards;
+  // Set when stored boards could not be read AND could not be backed up; saving is then skipped so the original survives.
+  const persistBlockedRef = useRef(false);
+  const [storageNotice, setStorageNotice] = useState<StorageNotice | null>(null);
+  const dismissStorageNotice = useCallback(() => setStorageNotice(null), []);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [savedBoards, savedIndex] = await Promise.all([
-          storage.getItem('pixelBoard_savedBoards'),
+        const [savedBoardsRead, savedIndex] = await Promise.all([
+          storage.tryGetItem('pixelBoard_savedBoards'),
           storage.getItem('pixelBoard_activeBoardIndex'),
         ]);
+        const savedBoards = savedBoardsRead.value;
+        // We know nothing about what is stored, so the blank default must not overwrite it.
+        if (savedBoardsRead.failed && savedBoards === null) {
+          persistBlockedRef.current = true;
+          setStorageNotice({ kind: 'read-failed' });
+        }
         if (savedBoards) {
-          const parsed = JSON.parse(savedBoards);
-          if (Array.isArray(parsed)) {
-            const validBoards = parsed.filter(isValidBoard);
-            if (validBoards.length > 0) setBoards(validBoards);
+          let validBoards: Board[] = [];
+          let fullyReadable = false;
+          try {
+            const parsed = JSON.parse(savedBoards);
+            if (Array.isArray(parsed)) {
+              validBoards = parsed.filter(isValidBoard);
+              fullyReadable = validBoards.length === parsed.length;
+            }
+          } catch (e) {
+            console.error("ANTI_CLOUD: Las pizarras guardadas no se pudieron interpretar", e);
+          }
+          if (validBoards.length > 0) setBoards(validBoards);
+          // The persist effect below overwrites the stored value with whatever we loaded, so anything
+          // we could not read in full has to be backed up first or it is lost for good.
+          if (!fullyReadable) {
+            try {
+              await saveRecoveryBackup(savedBoards);
+              setStorageNotice({ kind: 'recovered' });
+            } catch (e) {
+              persistBlockedRef.current = true;
+              setStorageNotice({ kind: 'backup-failed' });
+              console.error("ANTI_CLOUD: Sin respaldo no se sobrescriben las pizarras guardadas en esta sesión", e);
+            }
           }
         }
         if (savedIndex) {
@@ -46,7 +76,7 @@ export const useBoards = () => {
   const activeBoard = boards[activeBoardIndex] || boards[0];
 
   useEffect(() => {
-    if (isBoardsLoaded) storage.setItem('pixelBoard_savedBoards', JSON.stringify(boards));
+    if (isBoardsLoaded && !persistBlockedRef.current) storage.setItem('pixelBoard_savedBoards', JSON.stringify(boards));
   }, [boards, isBoardsLoaded]);
 
   useEffect(() => {
@@ -180,17 +210,25 @@ export const useBoards = () => {
     setBoards(prev => [...prev, createNewBoard(size?.width, size?.height)]);
   }, [boards, pushHistory]);
 
-  // Appends a copy of `board` as a new board and activates it; never replaces existing boards.
-  // Reads boardsRef because callers (slot loading) invoke it after an await, when a render closure could be stale.
-  const handleImportBoard = useCallback((board: Board) => {
+  // Appends copies of `incoming` as new boards (one undo step) and activates the first of them; never
+  // replaces existing boards. Reads boardsRef because callers (slot loading) invoke it after an await,
+  // when a render closure could be stale.
+  const handleImportBoards = useCallback((incoming: Board[]) => {
+    if (incoming.length === 0) return;
     const current = boardsRef.current;
-    let id = generateBoardId();
-    while (current.some(b => b.id === id)) id = generateBoardId();
-    const imported: Board = { ...JSON.parse(JSON.stringify(board)), id };
+    const usedIds = new Set(current.map(b => b.id));
+    const imported = incoming.map((board): Board => {
+      let id = generateBoardId();
+      while (usedIds.has(id)) id = generateBoardId();
+      usedIds.add(id);
+      return { ...JSON.parse(JSON.stringify(board)), id };
+    });
     pushHistory(current);
-    setBoards(prev => [...prev, imported]);
+    setBoards(prev => [...prev, ...imported]);
     setActiveBoardIndex(current.length);
   }, [pushHistory]);
+
+  const handleImportBoard = useCallback((board: Board) => handleImportBoards([board]), [handleImportBoards]);
 
   const handleRemoveBoard = useCallback((index: number) => {
     pushHistory(boards);
@@ -278,6 +316,7 @@ export const useBoards = () => {
     handleSendItemToBoard,
     handleAddBoard,
     handleImportBoard,
+    handleImportBoards,
     handleRemoveBoard,
     handleUpdateBoardSettings,
     handleAddConnection,
@@ -287,6 +326,8 @@ export const useBoards = () => {
     undo,
     redo,
     pushHistory,
-    boardsRef
+    boardsRef,
+    storageNotice,
+    dismissStorageNotice
   };
 };

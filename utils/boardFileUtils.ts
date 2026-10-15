@@ -71,15 +71,18 @@ const toSafeFileName = (name: string): string => {
   return /^(con|prn|aux|nul|com\d|lpt\d)(\..*)?$/i.test(base) ? `_${base}` : base;
 };
 
-export const downloadBoardFile = (board: Board, name: string): void => {
-  const blob = new Blob([serializeBoard(board, name)], { type: 'application/json' });
+export const downloadTextFile = (text: string, fileName: string): void => {
+  const blob = new Blob([text], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${toSafeFileName(name)}${BOARD_FILE_EXTENSION}`;
+  link.download = fileName;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  // Deferred so large boards are not cut off by an early revoke.
+  // Deferred so large files are not cut off by an early revoke.
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 };
+
+export const downloadBoardFile = (board: Board, name: string): void =>
+  downloadTextFile(serializeBoard(board, name), `${toSafeFileName(name)}${BOARD_FILE_EXTENSION}`);

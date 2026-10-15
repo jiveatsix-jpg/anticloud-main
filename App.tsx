@@ -12,6 +12,7 @@ import NotesModal from './components/NotesModal';
 import BoardSettingsModal from './components/BoardSettingsModal';
 import NewBoardModal from './components/NewBoardModal';
 import SaveSlotsModal from './components/SaveSlotsModal';
+import StorageNoticeBanner from './components/StorageNoticeBanner';
 import LayersModal from './components/LayersModal';
 import InventoryModal from './components/InventoryModal';
 import SuggestionsModal from './components/SuggestionsModal';
@@ -37,9 +38,10 @@ const App: React.FC = () => {
     isBoardsLoaded,
     boards, setBoards, activeBoardIndex, setActiveBoardIndex, activeBoard,
     handleUpdateItem, handleDeleteItem, handleDuplicateItem,
-    handleSendItemToBack, handleReorderItem, handleGroupItems, handleUngroupItems, handleSendItemToBoard, handleAddBoard, handleImportBoard, handleRemoveBoard,
+    handleSendItemToBack, handleReorderItem, handleGroupItems, handleUngroupItems, handleSendItemToBoard, handleAddBoard, handleImportBoards, handleRemoveBoard,
     handleUpdateBoardSettings, handleAddConnection, handleRemoveConnection,
-    canUndo, canRedo, undo, redo, pushHistory, boardsRef
+    canUndo, canRedo, undo, redo, pushHistory, boardsRef,
+    storageNotice, dismissStorageNotice
   } = useBoards();
 
   const undoRef = useRef(undo);
@@ -603,6 +605,10 @@ const App: React.FC = () => {
 
 
 
+      {storageNotice && (
+        <StorageNoticeBanner notice={storageNotice} onDismiss={dismissStorageNotice} />
+      )}
+
       {/* Modals */}
       {activeModal === 'addCounter' && (
         <AddElementModal
@@ -853,7 +859,7 @@ const App: React.FC = () => {
           board={activeBoard}
           boardNumber={activeBoardIndex + 1}
           onClose={() => setActiveModal(null)}
-          onImportBoard={handleImportBoard}
+          onImportBoards={handleImportBoards}
         />
       )}
 

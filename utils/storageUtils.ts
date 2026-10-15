@@ -5,7 +5,34 @@ import { get, set, del, clear } from 'idb-keyval';
 // out of order and leave a stale value persisted. Chain them per key instead.
 const pendingWrites = new Map<string, Promise<void>>();
 
+// `failed` tells "nothing stored" apart from "could not read IndexedDB": callers that would overwrite
+// the key with defaults need to know the difference. The localStorage fallback value is still returned.
+const tryGetItem = async (key: string): Promise<{ value: string | null; failed: boolean }> => {
+  let value: string | undefined;
+  try {
+    value = await get<string>(key);
+  } catch (e) {
+    console.error(`ANTI_CLOUD Error leyendo ${key}:`, e);
+    return { value: localStorage.getItem(key), failed: true };
+  }
+  if (value !== undefined && value !== null) {
+    return { value, failed: false };
+  }
+  // Fallback a localStorage para migrar datos antiguos de manera transparente
+  const localValue = localStorage.getItem(key);
+  if (localValue === null) {
+    return { value: null, failed: false };
+  }
+  try {
+    await set(key, localValue);
+  } catch (e) {
+    console.error(`ANTI_CLOUD Error migrando ${key} a IndexedDB:`, e);
+  }
+  return { value: localValue, failed: false };
+};
+
 export const storage = {
+  tryGetItem,
   async clearAll(): Promise<void> {
     try {
       await clear();
@@ -16,22 +43,7 @@ export const storage = {
     }
   },
   async getItem(key: string): Promise<string | null> {
-    try {
-      const value = await get<string>(key);
-      if (value !== undefined && value !== null) {
-        return value;
-      }
-      // Fallback a localStorage para migrar datos antiguos de manera transparente
-      const localValue = localStorage.getItem(key);
-      if (localValue !== null) {
-        await set(key, localValue); 
-        return localValue;
-      }
-      return null;
-    } catch (e) {
-      console.error(`ANTI_CLOUD Error leyendo ${key}:`, e);
-      return localStorage.getItem(key);
-    }
+    return (await tryGetItem(key)).value;
   },
 
   async setItem(key: string, value: string): Promise<void> {
