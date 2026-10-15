@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 
 interface ModalProps {
   onClose: () => void;
@@ -10,10 +10,15 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ onClose, title, children, className = "max-w-2xl", icon, footer }) => {
+  // A drag that starts inside the panel (e.g. selecting text in an input) and is released over the
+  // backdrop still fires a click on the backdrop, so only close when the press began there too.
+  const pressStartedOnBackdrop = useRef(false);
+
   return (
     <div
       className="fixed inset-0 bg-black/85 flex items-center justify-center z-[var(--z-modal)] p-4"
-      onClick={onClose}
+      onMouseDown={(e) => { pressStartedOnBackdrop.current = e.target === e.currentTarget; }}
+      onClick={(e) => { if (pressStartedOnBackdrop.current && e.target === e.currentTarget) onClose(); }}
     >
       <div
         className={`pixel-panel w-full ${className} text-white relative flex flex-col max-h-[90vh]`}
