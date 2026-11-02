@@ -94,7 +94,7 @@ export const useBoardActions = ({
       const initialX = (centerX - boardRect.left) / zoom - (finalWidth / 2);
       const initialY = (centerY - boardRect.top) / zoom - (finalHeight / 2);
       
-      const defaultText = type === ItemType.Counter ? '0' : (type === ItemType.Timer ? '00:00' : (type === ItemType.File ? 'Archivo' : (type === ItemType.Checkbox ? 'Tarea' : (type === ItemType.PlainText ? 'Texto' : (type === ItemType.Pixel || type === ItemType.Sprite ? '' : '¡Edítame!')))));
+      const defaultText = type === ItemType.Counter ? '0' : (type === ItemType.Timer ? '00:00' : (type === ItemType.File ? 'Archivo' : (type === ItemType.Checkbox ? '' :(type === ItemType.PlainText ? 'Texto' : (type === ItemType.Pixel || type === ItemType.Sprite ? '' : '¡Edítame!')))));
 
       const newItem: BoardItem = {
         id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

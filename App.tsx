@@ -669,7 +669,7 @@ const App: React.FC = () => {
           onCollectionChange={(key) => setActiveCheckboxKey(key as TitleCollectionKey)}
           onAdd={(imageUrl) => handleAddItemWithLog(ItemType.Checkbox, imageUrl, {
             checked: false,
-            text: 'Tarea'
+            text: ''
           })}
           onEditImages={(key) => setActiveModal({ type: 'editTitleImages', key: key as TitleCollectionKey })}
         />

@@ -760,7 +760,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({ item, onUpdate, onDelete,
             transform: `translate(${item.textOffsetX || 0}px, ${item.textOffsetY || 0}px)`
           }}
         >
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center ${isEditingText || item.text || (item.textFragments && item.textFragments.length > 0) ? 'gap-2' : ''}`}>
             {isCheckboxItem && (
               <div
                 className={`w-6 h-6 border-2 border-current flex items-center justify-center cursor-pointer pointer-events-auto bg-white/10`}

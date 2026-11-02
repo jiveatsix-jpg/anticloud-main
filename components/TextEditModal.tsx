@@ -381,7 +381,7 @@ const TextEditModal: React.FC<TextEditModalProps> = ({
                   filter: editedItem.neonGlow ? `drop-shadow(0 0 10px ${editedItem.neonColor || '#00ff00'}) drop-shadow(0 0 20px ${editedItem.neonColor || '#00ff00'})` : 'none'
                 }}
               >
-                <div className="flex items-center gap-2">
+                <div className={`flex items-center ${editedItem.text || (editedItem.textFragments && editedItem.textFragments.length > 0) ? 'gap-2' : ''}`}>
                   {editedItem.type === ItemType.Checkbox && (
                     <div className={`w-6 h-6 border-2 border-current flex items-center justify-center bg-white/10`}>
                       {editedItem.checked && <div className="w-4 h-4 bg-current" />}
