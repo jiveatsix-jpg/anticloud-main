@@ -14,7 +14,7 @@ interface BoardCanvasProps {
   isMultiSelectMode: boolean;
   handlePanMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void;
   handlePanTouchStart: (e: React.TouchEvent<HTMLDivElement>) => void;
-  handleUpdateItem: (updatedItem: BoardItem, selectedItemIds: string[]) => void;
+  handleUpdateItem: (updatedItem: BoardItem, selectedItemIds: string[], snapToGrid?: boolean, gridSize?: number) => void;
   handleDeleteItem: (id: string, setSelectedItemIds: any, setSelectedItemId: any) => void;
   handleDuplicateItem: (id: string) => void;
   handleStartEditItem: (item: BoardItem, fragmentIndex?: number) => void;
